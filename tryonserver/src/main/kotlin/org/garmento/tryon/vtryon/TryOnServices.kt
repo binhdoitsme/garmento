@@ -1,15 +1,17 @@
 package org.garmento.tryon.vtryon
 
+import org.garmento.tryon.users.UserId
 import org.garmento.tryon.users.UserServices
 import java.io.InputStream
 
-class SessionNotFound(id: String) : RuntimeException("Try-On session not found: $id")
+class SessionNotFound(val id: String) : RuntimeException("Try-On session not found: $id")
 
 data class TryOnJobDTO(
     val id: String,
+    val sessionId: String,
     val referenceImageURL: String,
     val garmentImageURL: String,
-    val resultURL: String?,
+    val resultURL: String? = null,
 )
 
 data class TryOnSessionDTO(val id: String, val tryOnJobs: List<TryOnJobDTO>? = null) {
@@ -19,78 +21,84 @@ data class TryOnSessionDTO(val id: String, val tryOnJobs: List<TryOnJobDTO>? = n
     }
 }
 
+fun toDTO(session: TryOnSession, tryOnStore: TryOnStore): TryOnSessionDTO {
+    val tryOnJobs = session.tryOnJobs.values.map {
+        val referenceImageURL = tryOnStore.getPublicURL(it.referenceImage)
+        val garmentImageURL = tryOnStore.getPublicURL(it.garmentImage)
+        val resultURL = if (it.isSucceeded()) tryOnStore.getPublicURL(it.result!!) else null
+        TryOnJobDTO(
+            it.id.value,
+            session.id.value,
+            referenceImageURL.toString(),
+            garmentImageURL.toString(),
+            resultURL?.toString(),
+        )
+    }
+    return TryOnSessionDTO(session.id.value, tryOnJobs)
+}
+
 class TryOnServices(
     private val repository: TryOnRepository,
-    private val resultStore: TryOnStore,
     private val userServices: UserServices,
-    private val imageRepository: ImageRepository,
+    private val tryOnStore: TryOnStore,
 ) {
-    fun createSession(userId: String): TryOnSessionDTO {
+    fun createSession(userId: UserId): TryOnSessionDTO {
         val user = userServices.findUser(userId)
         val session = TryOnSession(user.id).let { repository.save(it) }
         return TryOnSessionDTO.fromDomain(session)
     }
 
-    private fun findSessionBy(userId: String, sessionId: String): TryOnSession {
+    private fun findSessionBy(userId: UserId, sessionId: TryOnSessionId): TryOnSession {
         val user = userServices.findUser(userId)
-        return repository.findByUserAndId(user.id, TryOnSessionId(sessionId)) ?: throw SessionNotFound(sessionId)
+        return repository.findByUserAndId(user.id, sessionId) ?: throw SessionNotFound(sessionId.value)
     }
 
-    private fun findSessionBy(sessionId: String): TryOnSession {
-        return repository.findById(TryOnSessionId(sessionId)) ?: throw SessionNotFound(sessionId)
-    }
-
-    private fun toDTO(session: TryOnSession): TryOnSessionDTO {
-        val tryOnJobs = session.tryOnJobs.values.map {
-            val referenceImageURL = resultStore.getPublicURL(it.referenceImage)
-            val garmentImageURL = resultStore.getPublicURL(it.garmentImage)
-            val resultURL = if (it.isSucceeded()) resultStore.getPublicURL(it.result!!) else null
-            TryOnJobDTO(
-                it.id.value,
-                referenceImageURL.toString(),
-                garmentImageURL.toString(),
-                resultURL?.toString(),
-            )
-        }
-        return TryOnSessionDTO(session.id.value, tryOnJobs)
+    private fun findSessionBy(sessionId: TryOnSessionId): TryOnSession {
+        return repository.findById(sessionId) ?: throw SessionNotFound(sessionId.value)
     }
 
 
-    fun getSession(userId: String, sessionId: String): TryOnSessionDTO {
+    fun getSession(userId: UserId, sessionId: TryOnSessionId): TryOnSessionDTO {
         val session = findSessionBy(userId, sessionId)
-        return toDTO(session)
+        return toDTO(session, tryOnStore)
     }
 
     fun createNewTryOnJob(
-        userId: String, sessionId: String, referenceImage: InputStream, garmentImage: InputStream
-    ): TryOnSessionDTO {
+        userId: UserId, sessionId: TryOnSessionId, referenceImage: InputStream, garmentImage: InputStream
+    ) = run {
         val session = findSessionBy(userId, sessionId)
-        val referenceImageId = imageRepository.save(referenceImage)
-        val garmentImageId = imageRepository.save(garmentImage)
+        val referenceImageId = tryOnStore.save(referenceImage)
+        val garmentImageId = tryOnStore.save(garmentImage)
         session.createTryOn(
             referenceImage = referenceImageId, garmentImage = garmentImageId
-        )
-        repository.save(session)
-        return toDTO(session)
+        ).also { repository.save(session) }.let { session.tryOnJobs[it]!! }.let {
+            TryOnJobDTO(
+                id = it.id.value,
+                sessionId = session.id.value,
+                referenceImageURL = tryOnStore.getPublicURL(it.referenceImage).toString(),
+                garmentImageURL = tryOnStore.getPublicURL(it.garmentImage).toString()
+            )
+        }
     }
 
-    fun processingTryOnJob(userId: String, sessionId: String, jobId: String) {
+    fun processingTryOnJob(userId: UserId, sessionId: TryOnSessionId, jobId: TryOnId) {
         val session = findSessionBy(userId, sessionId)
-        session.process(TryOnId(jobId))
+        session.process(jobId)
+        repository.save(session)
     }
 
     fun markTryOnJobSuccess(
-        sessionId: String, jobId: String, resultImage: InputStream
+        sessionId: TryOnSessionId, jobId: TryOnId, resultImage: InputStream
     ): TryOnSessionDTO {
         val session = findSessionBy(sessionId)
-        val resultImageId = imageRepository.save(resultImage)
-        session.completedWithResult(TryOnId(jobId), resultImageId)
-        return toDTO(repository.save(session))
+        val resultImageId = tryOnStore.save(resultImage)
+        session.completedWithResult(jobId, resultImageId)
+        return toDTO(repository.save(session), tryOnStore)
     }
 
-    fun markTryOnJobFailed(sessionId: String, jobId: String): TryOnSessionDTO {
+    fun markTryOnJobFailed(sessionId: TryOnSessionId, jobId: TryOnId): TryOnSessionDTO {
         val session = findSessionBy(sessionId)
-        session.failed(TryOnId(jobId))
-        return toDTO(repository.save(session))
+        session.failed(jobId)
+        return toDTO(repository.save(session), tryOnStore)
     }
 }

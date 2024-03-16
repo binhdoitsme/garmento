@@ -20,22 +20,23 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
-    runtimeOnly("com.mysql:mysql-connector-j")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	// https://mvnrepository.com/artifact/io.mockk/mockk
-	testImplementation("io.mockk:mockk:1.13.10")
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
+	implementation("jakarta.jms:jakarta.jms-api:3.1.0")
+	implementation("org.springframework:spring-jms")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-security")
-	compileOnly("org.springframework.boot:spring-boot-devtools")
-	// https://mvnrepository.com/artifact/com.h2database/h2
-	runtimeOnly("com.h2database:h2:2.2.224")
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	implementation("org.springframework.boot:spring-boot-starter-artemis")
+	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0")
+	compileOnly("org.springframework.boot:spring-boot-devtools")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
+	testImplementation("io.mockk:mockk:1.13.10")
+	runtimeOnly("com.h2database:h2:2.2.224")
+    runtimeOnly("com.mysql:mysql-connector-j")
+	runtimeOnly("org.apache.activemq:artemis-jakarta-server")
 }
 
 tasks.withType<KotlinCompile> {
