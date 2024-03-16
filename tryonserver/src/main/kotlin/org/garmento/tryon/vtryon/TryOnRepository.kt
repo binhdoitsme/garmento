@@ -1,4 +1,4 @@
-package org.garmento.tryon.vtryon.services
+package org.garmento.tryon.vtryon
 
 interface TryOnRepository {
     fun save(session: TryOnSession)
