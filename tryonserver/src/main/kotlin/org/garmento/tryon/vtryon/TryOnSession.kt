@@ -1,5 +1,6 @@
 package org.garmento.tryon.vtryon
 
+import org.garmento.tryon.utils.throwIfInvalidUuidValue
 import org.garmento.tryon.users.UserId
 import java.util.UUID
 
@@ -7,12 +8,16 @@ class TryOnJobNotFound(id: TryOnId) : RuntimeException("Try-On job not found in 
 
 class NotCompleted(id: TryOnId) : RuntimeException("Try-On job is not completed: $id")
 
-data class TryOnSessionId(val value: UUID = UUID.randomUUID())
+data class TryOnSessionId(val value: String = UUID.randomUUID().toString()) {
+    init {
+        throwIfInvalidUuidValue(value, javaClass)
+    }
+}
 
 data class TryOnSession(
-        val userId: UserId,
-        val id: TryOnSessionId = TryOnSessionId(),
-        val tryOnJobs: MutableMap<TryOnId, TryOn> = mutableMapOf(),
+    val userId: UserId,
+    val id: TryOnSessionId = TryOnSessionId(),
+    val tryOnJobs: MutableMap<TryOnId, TryOn> = mutableMapOf(),
 ) {
 
     fun createTryOn(referenceImage: ImageId, garmentImage: ImageId, id: TryOnId = TryOnId()) = run {
