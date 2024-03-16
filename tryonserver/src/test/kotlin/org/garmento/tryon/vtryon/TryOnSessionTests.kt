@@ -1,6 +1,6 @@
 package org.garmento.tryon.vtryon
 
-import org.garmento.tryon.vtryon.*
+import org.garmento.tryon.users.UserId
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
