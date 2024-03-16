@@ -14,10 +14,10 @@ data class TryOnSession(
         val id: TryOnSessionId = TryOnSessionId(),
         val tryOnJobs: MutableMap<TryOnId, TryOn> = mutableMapOf(),
 ) {
-    val tryOnJobIds: List<TryOnId> get() = tryOnJobs.keys.toList()
 
-    fun createTryOn(referenceImage: ImageId, garmentImage: ImageId) = run {
-        TryOn(referenceImage, garmentImage).also { tryOnJobs[it.id] = it }.id
+    fun createTryOn(referenceImage: ImageId, garmentImage: ImageId, id: TryOnId = TryOnId()) = run {
+        TryOn(referenceImage, garmentImage, id = id).also { tryOnJobs[it.id] = it }
+        id
     }
 
     private fun throwIfNotFound(tryOnId: TryOnId) {

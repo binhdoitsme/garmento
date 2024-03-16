@@ -32,6 +32,10 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	compileOnly("org.springframework.boot:spring-boot-devtools")
+	// https://mvnrepository.com/artifact/com.h2database/h2
+	runtimeOnly("com.h2database:h2:2.2.224")
+	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-actuator
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
 }
 
 tasks.withType<KotlinCompile> {
