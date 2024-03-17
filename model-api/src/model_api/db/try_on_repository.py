@@ -39,9 +39,10 @@ class InferenceJobRepositoryOnSqlAlchemy(InferenceJobRepository):
                 self.session.add(existing)
             if job.result_image_id:
                 existing.result_image_id = job.result_image_id.value
+        self.session.commit()
 
     def find_by_id(self, id: InferenceJobId):
-        existing = self.session.query(InferenceJobModel).filter_by(id=id).first()
+        existing = self.session.query(InferenceJobModel).filter_by(id=id.value).first()
         if not existing:
             return None
         return InferenceJob(

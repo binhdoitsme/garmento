@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import dataclasses
 import enum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import NamedTuple, Protocol
 from uuid import UUID, uuid4
 
@@ -13,8 +14,9 @@ class InferenceJobStatus(enum.Enum):
     FAILED = "FAILED"
 
 
-class InferenceJobId(NamedTuple):
-    value: str = str(uuid4())
+@dataclass(frozen=True)
+class InferenceJobId:
+    value: str = field(default_factory=lambda: str(uuid4()))
 
     @staticmethod
     def from_(value: str):
@@ -25,11 +27,22 @@ class ImageId(NamedTuple):
     value: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class InferenceJob:
-    id: InferenceJobId
+    id: InferenceJobId = field(default_factory=InferenceJobId)
     status: InferenceJobStatus = InferenceJobStatus.PENDING
     result_image_id: ImageId | None = None
+
+    def processing(self):
+        return dataclasses.replace(self, status=InferenceJobStatus.IN_PROGRESS)
+
+    def succeed_with(self, result_image_id: ImageId):
+        return dataclasses.replace(
+            self, status=InferenceJobStatus.SUCCEEDED, result_image_id=result_image_id
+        )
+
+    def failed(self):
+        return dataclasses.replace(self, status=InferenceJobStatus.FAILED)
 
 
 class InferenceJobRepository(Protocol):
