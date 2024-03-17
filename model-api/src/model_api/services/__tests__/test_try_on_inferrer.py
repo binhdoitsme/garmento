@@ -6,8 +6,8 @@ from model_api.services.try_on import (
     HumanSegmentator,
     PoseParser,
     TensorImage,
-    TryOnInferrer,
-    TryOnInputs,
+    GarmentAndReferenceTryOn,
+    GarmentAndReferenceInputs,
     TryOnResult,
     TryOnSynthesizer,
 )
@@ -25,7 +25,7 @@ def test__should_output_correct_dimensions__given_invalid_input_dimensions(
     pose_parser = mocker.patch(get_full_name(PoseParser))
     agnostic_mask_parser = mocker.patch(get_full_name(AgnosticParser))
     synthesizer = mocker.patch(get_full_name(TryOnSynthesizer))
-    try_on_inferrer = TryOnInferrer(
+    try_on_inferrer = GarmentAndReferenceTryOn(
         pose_parser=pose_parser,
         human_segmentator=human_segmentator,
         agnostic_mask_parser=agnostic_mask_parser,
@@ -39,7 +39,7 @@ def test__should_output_correct_dimensions__given_invalid_input_dimensions(
         TensorImage(fake_input_tensor, IMG_SIZE)
     )
 
-    fake_inputs = TryOnInputs(
+    fake_inputs = GarmentAndReferenceInputs(
         reference_image=TensorImage(fake_input_tensor, IMG_SIZE),
         garment_image=TensorImage(fake_input_tensor, IMG_SIZE),
         size=IMG_SIZE,

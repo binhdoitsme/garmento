@@ -12,6 +12,11 @@ dependencies = [
     "onnx>=1.15.0",
     "onnxruntime>=1.17.1",
     "scipy>=1.12.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "sqlalchemy>=2.0.28",
+    "mysqlclient>=2.2.4",
+    "alembic>=1.13.1",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -32,3 +37,7 @@ dev = [
 [tool.pdm.scripts]
 _.env_file = ".env"
 test = "pytest -s src"
+dev = "uvicorn model_api.main:app --reload --app-dir src"
+create_migration = "alembic revision --autogenerate" # -m "<message>"
+apply_migration = "alembic upgrade head"
+rollback_migration = "alembic downgrade head-1"

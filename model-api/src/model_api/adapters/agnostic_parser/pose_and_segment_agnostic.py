@@ -2,11 +2,10 @@ from typing import Sequence
 
 import numpy as np
 import torch
-from model_api.services.try_on import AgnosticParser
+from model_api.services.try_on import AgnosticParser, TensorImage
 from PIL import Image
 
-from ...services.try_on import TensorImage
-from .masks import get_parse_agnostic, get_img_agnostic
+from .masks import get_img_agnostic, get_parse_agnostic
 
 
 class PoseAndSegmentAgnosticParser(AgnosticParser):

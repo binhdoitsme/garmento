@@ -30,12 +30,21 @@ class TensorImage:
 
 
 @dataclass
-class TryOnInputs:
+class GarmentAndReferenceInputs:
     reference_image: TensorImage
     garment_image: TensorImage
     size: ImageSize
 
     def __post_init__(self): ...
+
+
+@dataclass
+class PresetReferenceAndGarmentInputs:
+    garment_image: TensorImage
+    reference_image: TensorImage
+    pose_map_image: TensorImage
+    agnostic_mask_image: TensorImage
+    size: ImageSize
 
 
 @dataclass
@@ -78,7 +87,7 @@ IMG_SIZE = (768, 1024)
 
 
 @dataclass
-class TryOnInferrer:
+class GarmentAndReferenceTryOn:
     pose_parser: PoseParser
     human_segmentator: HumanSegmentator
     agnostic_mask_parser: AgnosticParser
@@ -86,7 +95,7 @@ class TryOnInferrer:
     input_size = IMG_SIZE
     output_size = IMG_SIZE
 
-    def execute(self, inputs: TryOnInputs) -> TryOnResult:
+    def execute(self, inputs: GarmentAndReferenceInputs) -> TryOnResult:
         reference_image = inputs.reference_image
         garment_image = inputs.garment_image
         human_segments = self.human_segmentator.parse(reference_image)
@@ -102,3 +111,7 @@ class TryOnInferrer:
             agnostic_img=agnostic_img,
         )
         return self.synthesizer.synthesize(synthesis_inputs)
+
+# class GarmentOnlyTryOn:
+#     def execute(self, inputs: PresetReferenceAndGarmentInputs) -> TryOnResult:
+#         ...

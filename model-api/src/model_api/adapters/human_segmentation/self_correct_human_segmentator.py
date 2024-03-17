@@ -3,13 +3,12 @@ from __future__ import annotations
 import cv2
 import numpy as np
 import torch
-from model_api.services.try_on import HumanSegmentator
+from model_api.services.try_on import HumanSegmentator, TensorImage
 from onnxruntime import InferenceSession  # type: ignore
+from PIL import Image  # type: ignore
 from torchvision import transforms  # type: ignore
 from torchvision.transforms import functional as F  # type: ignore
-from PIL import Image  # type: ignore
 
-from ...services.try_on import TensorImage
 from .transforms import get_meta, transform_logits
 
 

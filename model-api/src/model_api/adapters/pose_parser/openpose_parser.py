@@ -3,8 +3,8 @@ from dataclasses import dataclass
 import numpy as np
 import numpy.typing as npt
 import torch
+from model_api.services.try_on import PoseParser, TensorImage
 
-from ...services.try_on import PoseParser, TensorImage
 from .torch_openpose import OpenPose
 from .util import draw_pose
 

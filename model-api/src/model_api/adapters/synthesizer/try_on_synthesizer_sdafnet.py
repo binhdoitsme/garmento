@@ -1,12 +1,15 @@
 import numpy as np
 import onnxruntime as ort  # type: ignore
 import torch  # type: ignore
-from model_api.services.try_on import TryOnSynthesizer
+from model_api.services.try_on import (
+    TensorImage,
+    TryOnResult,
+    TryOnSynthesisInputs,
+    TryOnSynthesizer,
+)
 from PIL import Image
 from torch.nn import functional as F  # type: ignore
 from torchvision import transforms  # type: ignore
-
-from ...services.try_on import TensorImage, TryOnResult, TryOnSynthesisInputs
 
 
 class TryOnSynthesizerOnSDAFNet(TryOnSynthesizer):
