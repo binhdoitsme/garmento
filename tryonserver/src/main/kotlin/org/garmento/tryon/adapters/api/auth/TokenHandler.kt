@@ -1,0 +1,67 @@
+package org.garmento.tryon.adapters.api.auth
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.api.client.http.HttpRequestInitializer
+import com.google.api.client.http.HttpTransport
+import com.google.api.client.json.JsonFactory
+import com.google.api.services.oauth2.Oauth2
+import com.google.api.services.oauth2.model.Tokeninfo
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.Jws
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.io.Decoders
+import io.jsonwebtoken.security.Keys
+import jakarta.servlet.FilterChain
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
+import org.garmento.tryon.auth.User
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.stereotype.Component
+import org.springframework.web.filter.OncePerRequestFilter
+import java.util.*
+import javax.crypto.SecretKey
+
+
+@Component
+class TokenHandler(
+    @Value("\${jwt.secret}") private val secret: String,
+    private val transport: HttpTransport,
+    private val jsonFactory: JsonFactory
+) {
+    private val key: SecretKey
+        get() {
+            val bytes = Decoders.BASE64.decode(secret)
+            return Keys.hmacShaKeyFor(bytes)
+        }
+
+    fun createToken(
+        userInfo: User,
+        currentTimeMillis: Long = System.currentTimeMillis(),
+        expirationMillis: Long = 1000 * 60 * 60 * 24 // 24 hours
+    ): String =
+        Jwts.builder()
+            .subject(userInfo.email)
+            .claim("role", userInfo.role)
+            .claim("name", userInfo.name)
+            .issuedAt(Date(currentTimeMillis))
+            .expiration(Date(currentTimeMillis + expirationMillis))
+            .signWith(key)
+            .compact()
+
+    fun parseToken(token: String): Jws<Claims> =
+        Jwts.parser().verifyWith(key).build().parseSignedClaims(token)
+
+    fun getSSOTokenInfo(token: String): Tokeninfo? = run {
+        val requestInitializer: HttpRequestInitializer =
+            GoogleCredential.Builder().build().setAccessToken(token)
+        val oauth2 = Oauth2.Builder(transport, jsonFactory, requestInitializer)
+            .setApplicationName("Garmento App")
+            .build()
+        oauth2.tokeninfo().setAccessToken(token).execute()
+    }
+}
+
