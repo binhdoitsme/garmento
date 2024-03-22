@@ -1,5 +1,6 @@
 package org.garmento.tryon.adapters.api.auth
 
+import org.garmento.tryon.auth.AuthRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -7,6 +8,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 
 @Configuration
@@ -14,7 +16,9 @@ import org.springframework.security.web.SecurityFilterChain
 class SecurityConfig {
     @Bean
     fun filterChain(
-        http: HttpSecurity, authService: AuthService
+        http: HttpSecurity,
+        tokenHandler: TokenHandler,
+        authRepository: AuthRepository
     ): SecurityFilterChain = http {
         csrf { disable() }
         authorizeHttpRequests {
@@ -23,8 +27,8 @@ class SecurityConfig {
             authorize(anyRequest, authenticated)
         }
         sessionManagement { sessionCreationPolicy = SessionCreationPolicy.STATELESS }
-//        addFilterBefore<UsernamePasswordAuthenticationFilter>(
-//            TryOnAuthenticationFilter(authService)
-//        )
+        addFilterBefore<UsernamePasswordAuthenticationFilter>(
+            JwtAuthenticationFilter(tokenHandler, authRepository)
+        )
     }.let { http.build() }
 }
