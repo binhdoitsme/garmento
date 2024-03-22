@@ -8,13 +8,32 @@ import {
   Button,
   Tooltip,
 } from "@material-tailwind/react";
+import { useContext, useEffect } from "react";
+import {
+  GlobalContextActionType,
+  GlobalDispatchContext,
+} from "../global-state";
 
 export default function Catalogs() {
+  const globalDispatch = useContext(GlobalDispatchContext);
+
+  useEffect(() => {
+    globalDispatch?.({
+      type: GlobalContextActionType.SET_BREADCRUMBS,
+      value: {
+        breadcrumbs: "Designer > Catalogs",
+      },
+    });
+    globalDispatch?.({
+      type: GlobalContextActionType.SET_TITLE,
+      value: {
+        title: "Garmento | Manage Catalogs",
+      },
+    });
+  }, [globalDispatch]);
+
   return (
-    <div className="flex flex-col items-center mb-6 pb-4">
-      <div className="md:w-5/6 xl:w-5/6 flex justify-start my-4">
-        <Typography variant="h3">Designer &gt; Catalogs</Typography>
-      </div>
+    <div className="flex flex-col items-center mb-6 py-4">
       <div className="md:w-5/6 xl:w-5/6 flex justify-start">
         <Button color="indigo" variant="gradient" size="sm">
           <i className="fas fa-file-circle-plus pr-1" /> Create Catalog
@@ -92,12 +111,7 @@ function CatalogCard(props: CatalogCardProps) {
         </Tooltip>
         {status === "APPROVED" && (
           <Tooltip content="Unapprove">
-            <Button
-              className="px-3"
-              variant="outlined"
-              color="red"
-              size="sm"
-            >
+            <Button className="px-3" variant="outlined" color="red" size="sm">
               <i className="fas fa-thumbs-down" />
             </Button>
           </Tooltip>

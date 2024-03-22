@@ -1,5 +1,7 @@
 "use client";
+import { GlobalContextActionType, GlobalDispatchContext } from "@/app/global-state";
 import { Button, Tooltip, Typography } from "@material-tailwind/react";
+import { useContext, useEffect } from "react";
 
 export default function CatalogDetailsPage({
   params,
@@ -110,12 +112,25 @@ function CatalogItem(props: CatalogItemProps) {
 }
 function Catalog(props: CatalogProps) {
   const { name, createdBy, approvedBy, status, items } = props;
+  const globalDispatch = useContext(GlobalDispatchContext);
+
+  useEffect(() => {
+    globalDispatch?.({
+      type: GlobalContextActionType.SET_BREADCRUMBS,
+      value: {
+        breadcrumbs: `Designer > Catalogs > Catalog "${name}"`,
+      },
+    });
+    globalDispatch?.({
+      type: GlobalContextActionType.SET_TITLE,
+      value: {
+        title: "Garmento | Manage Catalogs",
+      },
+    });
+  }, [globalDispatch, name]);
 
   return (
-    <div className="flex flex-col items-center mb-6 pb-4">
-      <div className="md:w-5/6 xl:w-5/6 flex justify-start mt-4">
-        <Typography variant="h3">Designer &gt; Catalogs &gt; {name}</Typography>
-      </div>
+    <div className="flex flex-col items-center mb-6 py-4">
       <div className="md:w-5/6 xl:w-5/6 flex items-start mt-4 flex-col">
         <Typography>
           <i className="fas fa-pen-to-square pr-2 block w-6 text-gray-700" />

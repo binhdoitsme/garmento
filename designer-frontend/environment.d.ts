@@ -2,8 +2,10 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       NODE_ENV: 'development' | 'production';
-      REACT_APP_GOOGLE_CLIENT_ID: string;
-      REACT_APP_GOOGLE_CLIENT_SECRET: string;
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: string;
+      NEXT_PUBLIC_GOOGLE_CLIENT_SECRET: string;
+      NEXT_PUBLIC_TRY_ON_BACKEND_HOST: string;
+      NEXT_PUBLIC_ASSETS_BACKEND_HOST: string;
       PORT?: string;
     }
   }
