@@ -1,7 +1,7 @@
 package org.garmento.tryon.adapters.api.auth
 
 import jakarta.servlet.http.HttpServletResponse
-import org.garmento.tryon.auth.AuthRepository
+import org.garmento.tryon.services.auth.AuthRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -26,7 +26,6 @@ class TokenController @Autowired constructor(
     @PostMapping
     fun exchangeToken(@RequestBody token: TokenRequest, response: HttpServletResponse): ResponseEntity<Void> =
         runCatching<TokenController, ResponseEntity<Void>> {
-            println(token.token)
             val tokenInfo = tokenHandler.getSSOTokenInfo(token.token)
             if (tokenInfo?.verifiedEmail != true) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()

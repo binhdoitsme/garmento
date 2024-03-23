@@ -1,6 +1,6 @@
 package org.garmento.tryon.adapters.api.auth
 
-import org.garmento.tryon.users.UserRepository
+import org.garmento.tryon.services.users.UserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CookieValue
