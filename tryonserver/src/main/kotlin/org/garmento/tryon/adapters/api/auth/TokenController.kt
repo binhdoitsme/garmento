@@ -26,6 +26,7 @@ class TokenController @Autowired constructor(
     @PostMapping
     fun exchangeToken(@RequestBody token: TokenRequest, response: HttpServletResponse): ResponseEntity<Void> =
         runCatching<TokenController, ResponseEntity<Void>> {
+            println(token.token)
             val tokenInfo = tokenHandler.getSSOTokenInfo(token.token)
             if (tokenInfo?.verifiedEmail != true) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()

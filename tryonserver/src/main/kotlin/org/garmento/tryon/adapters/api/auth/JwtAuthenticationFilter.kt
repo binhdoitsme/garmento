@@ -16,7 +16,12 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     companion object {
         const val COOKIE_NAME = "accessToken"
+        val PUBLIC_ROUTES = listOf("/tokens", "/actuator")
     }
+
+    override fun shouldNotFilter(request: HttpServletRequest) =
+        PUBLIC_ROUTES.any { request.servletPath.startsWith(it) }
+
 
     override fun doFilterInternal(
         request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain
