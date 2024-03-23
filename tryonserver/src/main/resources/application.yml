@@ -1,10 +1,30 @@
 ---
 spring:
   datasource:
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: gmt
+    password: gmt
+    url: jdbc:mysql://localhost:6603/tryon_db
+  artemis:
+    mode: embedded
+  application:
+    name: try-on-service
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+eureka:
+  client:
+    serviceUrl:
+       defaultZone: http://localhost:8761/eureka/
+remote:
+  assetServiceId: assets-manager
+  inferenceServiceId: try-on-inference
 
+jwt:
+  secret: "mysecretmysecretmysecretmysecretmysecretmysecretmysecret"
+
+google:
+  client-id: "810620300444-tpg5ludab1mq0v7sjjl8eq16oncdpn1k.apps.googleusercontent.com"
 ---

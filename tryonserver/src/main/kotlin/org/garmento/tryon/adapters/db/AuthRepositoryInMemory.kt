@@ -1,8 +1,8 @@
 package org.garmento.tryon.adapters.db
 
-import org.garmento.tryon.auth.AuthRepository
-import org.garmento.tryon.auth.Role
-import org.garmento.tryon.auth.User
+import org.garmento.tryon.services.auth.AuthRepository
+import org.garmento.tryon.services.auth.Role
+import org.garmento.tryon.services.auth.User
 import org.springframework.stereotype.Component
 
 @Component

@@ -4,9 +4,10 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.garmento.tryon.users.User
-import org.garmento.tryon.users.UserId
-import org.garmento.tryon.users.UserServices
+import org.garmento.tryon.services.assets.ImageId
+import org.garmento.tryon.services.users.User
+import org.garmento.tryon.services.users.UserId
+import org.garmento.tryon.services.users.UserServices
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +26,7 @@ class TryOnServicesTest {
     private val fakeURL = URI("file:///app/file.jpg").toURL()
     private val stubImageId = ImageId()
     private val userId = UserId("user123")
-    private val user = User(userId)
+    private val user = User(userId, "email", "name")
 
     @BeforeEach
     fun setUp() {
@@ -59,7 +60,7 @@ class TryOnServicesTest {
     fun `getSession returns TryOnSessionDTO`() {
         // Arrange
         val sessionId = TryOnSessionId()
-        val user = User(UserId("user123")) // Example user
+        val user = User(UserId("user123"), "email", "name") // Example user
         val referenceImage = ImageId(UUID.randomUUID().toString())
         val garmentImage = ImageId(UUID.randomUUID().toString())
         val tryOn = TryOn(referenceImage, garmentImage)
