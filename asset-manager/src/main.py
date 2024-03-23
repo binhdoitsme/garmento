@@ -4,9 +4,11 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from uuid import UUID
 
 from contextlib import asynccontextmanager
+
+from fastapi.responses import StreamingResponse
 from asset_manager.storage import FileStorageEngine
 from py_eureka_client.eureka_client import EurekaClient  # type: ignore
-import socket
+
 
 logger = logging.getLogger("uvicorn")
 
@@ -44,4 +46,4 @@ async def get_asset(asset_id: UUID):
     asset = storage_engine.get_file(asset_id)
     if asset is None:
         raise HTTPException(status_code=404, detail="Asset not found")
-    return asset
+    return StreamingResponse(asset)
