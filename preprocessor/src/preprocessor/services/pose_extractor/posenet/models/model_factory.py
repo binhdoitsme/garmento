@@ -4,15 +4,16 @@ import os
 
 from .mobilenet_v1 import MobileNetV1, MOBILENET_V1_CHECKPOINTS
 
-MODEL_DIR = './posenet_models'
+MODEL_DIR = "./posenet_models"
 DEBUG_OUTPUT = False
 
 
 def load_model(model_id, output_stride=16, model_dir=MODEL_DIR):
-    model_path = os.path.join(model_dir, MOBILENET_V1_CHECKPOINTS[model_id] + '.pth')
+    model_path = os.path.join(model_dir, MOBILENET_V1_CHECKPOINTS[model_id] + ".pth")
     if not os.path.exists(model_path):
-        print('Cannot find models file %s, converting from tfjs...' % model_path)
-        from posenet.converter.tfjs2pytorch import convert
+        print("Cannot find models file %s, converting from tfjs..." % model_path)
+        from ..converter.tfjs2pytorch import convert
+
         convert(model_id, model_dir, check=False)
         assert os.path.exists(model_path)
 

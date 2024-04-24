@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 from injector import inject
@@ -24,3 +25,13 @@ class JobRepositoryOnSQLA(JobRepository):
         if not maybe_record:
             raise NotFound(PreprocessingJob, f"id={id}")
         return maybe_record.to_domain()
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["session"]
+        return state
+    
+    def __setstate__(self, state: dict[str, Any]):
+        self.__dict__.update(state)
+        from ..module import injector
+        self.session = injector.get(Session)

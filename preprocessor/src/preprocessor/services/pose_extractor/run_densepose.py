@@ -88,6 +88,7 @@ class InferenceAction:
         add_densepose_config(cfg)
         cfg.merge_from_file(config_fpath)
         cfg.MODEL.WEIGHTS = model_fpath
+        cfg.MODEL.DEVICE = "cpu"
         cfg.freeze()
         return cfg
 
@@ -211,8 +212,9 @@ def run_densepose(
 def main():
     cfg = "configs/densepose/densepose_rcnn_R_50_FPN_s1x.yaml"
     model = "https://dl.fbaipublicfiles.com/densepose/densepose_rcnn_R_50_FPN_s1x/165712039/model_final_162be9.pkl"
-    input_file = "origin.jpg"
-    output_file = "poses.json"
+    model = "models/densepose/model_final_162be9.pkl"
+    input_file = "testdata/origin.jpg"
+    output_file = "testdata/poses.json"
 
     global logger
     logger = setup_logger(name=LOGGER_NAME)

@@ -6,6 +6,7 @@ import torch
 from .posenet.constants import *
 from .posenet.models.model_factory import load_model
 from .posenet.utils import *
+from .posenet import decode_multiple_poses
 
 
 def extract_poses(
@@ -23,7 +24,7 @@ def extract_poses(
     output_stride = net.output_stride
     scale_factor = 1.0
 
-    input_image, draw_image, output_scale = posenet.read_imgfile(
+    input_image, draw_image, output_scale = read_imgfile(
         testfile, scale_factor=scale_factor, output_stride=output_stride
     )
     # print(input_image)
@@ -37,7 +38,7 @@ def extract_poses(
             displacement_bwd_result,
         ) = net(input_image)
 
-        pose_scores, keypoint_scores, keypoint_coords = posenet.decode_multiple_poses(
+        pose_scores, keypoint_scores, keypoint_coords = decode_multiple_poses(
             heatmaps_result.squeeze(0),
             offsets_result.squeeze(0),
             displacement_fwd_result.squeeze(0),
