@@ -12,7 +12,7 @@ from .posenet import decode_multiple_poses
 def extract_poses(
     input_file: str,
     output_file: str,
-    device="mps"
+    device="cpu"
 ):
     """
     Run pose extraction on an input image to a JSON file.

@@ -103,12 +103,56 @@ def apply_transform(img, transform=lambda *_, **__: None):
     return transform({"image": img, "label": 0})
 
 
+
+def to_seg_grayscale(image: Image.Image):
+    img_w, img_h = image.size
+
+    img = np.array(image)
+    gray_img = np.zeros((img_h, img_w))
+
+    for y_idx in range(img.shape[0]):
+        for x_idx in range(img.shape[1]):
+            tmp = img[y_idx][x_idx]
+            if np.array_equal(tmp, [0, 0, 0]):
+                gray_img[y_idx][x_idx] = 0
+            if np.array_equal(tmp, [255, 0, 0]):
+                gray_img[y_idx][x_idx] = 2  # 머리카락
+            elif np.array_equal(tmp, [0, 0, 255]):
+                gray_img[y_idx][x_idx] = 13  # 머리
+            elif np.array_equal(tmp, [85, 51, 0]):
+                gray_img[y_idx][x_idx] = 10  # 목
+            elif np.array_equal(tmp, [255, 85, 0]):
+                gray_img[y_idx][x_idx] = 5  # 몸통
+            elif np.array_equal(tmp, [0, 255, 255]):
+                gray_img[y_idx][x_idx] = 15  # 왼팔
+            elif np.array_equal(tmp, [51, 170, 221]):
+                gray_img[y_idx][x_idx] = 14  # 오른팔
+            elif np.array_equal(tmp, [0, 85, 85]):
+                gray_img[y_idx][x_idx] = 9  # 바지
+            elif np.array_equal(tmp, [0, 0, 85]):
+                gray_img[y_idx][x_idx] = 6  # 원피스
+            elif np.array_equal(tmp, [0, 128, 0]):
+                gray_img[y_idx][x_idx] = 12  # 치마
+            elif np.array_equal(tmp, [177, 255, 85]):
+                gray_img[y_idx][x_idx] = 17  # 왼다리
+            elif np.array_equal(tmp, [85, 255, 170]):
+                gray_img[y_idx][x_idx] = 16  # 오른다리
+            elif np.array_equal(tmp, [0, 119, 221]):
+                gray_img[y_idx][x_idx] = 5  # 외투
+            else:
+                gray_img[y_idx][x_idx] = 0
+
+    img = cv2.resize(gray_img, (768, 1024), interpolation=cv2.INTER_NEAREST)
+    return Image.fromarray(np.array(img, dtype=np.uint8), "L")
+
+
 def inference(
     net: torch.nn.Module,
     img_path: str,
     output_path: str,
     output_name: str,
     device="mps",
+    size=(384, 512),
 ):
     """
     :param net:
@@ -141,6 +185,7 @@ def inference(
     # multi-scale
     scales: list[float] = [1, 0.5, 0.75, 1.25, 1.5, 1.75]
     img = read_img(img_path)
+    img = img.resize(size)
     image_samples = []
     flipped_image_samples = []
     for scale in scales:
@@ -198,8 +243,9 @@ def inference(
     vis_res = decode_labels(results)
 
     output_image = Image.fromarray(vis_res[0])
+    output_image = to_seg_grayscale(output_image)
     output_image.save(f"{output_path}/{output_name}.png")
-    cv2.imwrite(f"{output_path}/{output_name}_gray.png", results[0, :, :])
+    # cv2.imwrite(f"{output_path}/{output_name}_gray.png", results[0, :, :])
 
     end_time = timeit.default_timer()
     print(
@@ -245,11 +291,3 @@ def do_human_segmentation_inference(
         device=device,
     )
 
-
-if __name__ == "__main__":
-    do_human_segmentation_inference(
-        img_path="./img/messi.jpg",
-        output_file="./img/output.jpg",
-        model_path="./models/graphonomy/inference.pth",
-        device="mps",
-    )
