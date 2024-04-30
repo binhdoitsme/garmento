@@ -1,5 +1,5 @@
-from functools import lru_cache
 import os
+from functools import lru_cache
 
 from fastapi import FastAPI
 from injector import Binder, Injector, Module, provider, singleton
@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from .api.router import PreprocessingRouter
+from .api.static_images_router import ImagesRouter
 from .db.job_repository_sqla import JobRepositoryOnSQLA
 from .services.job_repository import JobRepository
 from .services.preprocessing_service import PreprocessingService
@@ -31,9 +32,12 @@ class ProductionModule(Module):
 
     @singleton
     @provider
-    def provide_fastapi_app(self, router: PreprocessingRouter) -> FastAPI:
+    def provide_fastapi_app(
+        self, router: PreprocessingRouter, images_router: ImagesRouter
+    ) -> FastAPI:
         app = FastAPI()
         app.include_router(router.router)
+        app.include_router(images_router.router)
         return app
 
 
