@@ -291,3 +291,12 @@ def do_human_segmentation_inference(
         device=device,
     )
 
+
+
+def main():
+    do_human_segmentation_inference(
+        img_path="/Users/binhdh/Coding/FSB-Study/thesis/garmento/preprocessor/testdata/origin.jpg",
+        output_file="/Users/binhdh/Coding/FSB-Study/thesis/garmento/preprocessor/testdata/output.jpg",
+        model_path="/Users/binhdh/Coding/FSB-Study/thesis/garmento/preprocessor/models/graphonomy/inference.pth",
+        device="cpu",
+    )

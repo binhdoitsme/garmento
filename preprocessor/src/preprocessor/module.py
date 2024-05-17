@@ -1,8 +1,11 @@
+import logging
 import os
+from contextlib import asynccontextmanager
 from functools import lru_cache
 
 from fastapi import FastAPI
 from injector import Binder, Injector, Module, provider, singleton
+from py_eureka_client.eureka_client import EurekaClient  # type: ignore
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -30,6 +33,14 @@ class ProductionModule(Module):
     ) -> PreprocessingService:
         service = PreprocessingService(repository)
         return service
+    
+    @singleton
+    @provider
+    def provide_eureka_client(self) -> EurekaClient:
+        return EurekaClient(
+            eureka_server=os.getenv("EUREKA_CLIENT_SERVICE_URL", ""),
+            app_name=os.getenv("SERVICE_NAME", ""),
+        )
 
     @singleton
     @provider
@@ -38,8 +49,21 @@ class ProductionModule(Module):
         router: PreprocessingRouter,
         images_router: ImagesRouter,
         health_check_router: HealthCheckRouter,
+        service_registry: EurekaClient,
     ) -> FastAPI:
-        app = FastAPI()
+        logger = logging.getLogger("uvicorn")
+
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            if service_registry:
+                await service_registry.start()
+                logger.info("Started Service Registry over Eureka.")
+                yield
+                await service_registry.stop()
+            else:
+                yield
+        
+        app = FastAPI(lifespan=lifespan)
         app.include_router(router.router)
         app.include_router(images_router.router)
         app.include_router(health_check_router.router)
