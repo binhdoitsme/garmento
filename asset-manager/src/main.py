@@ -24,9 +24,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 storage_engine = FileStorageEngine()
 service_registry = EurekaClient(
-    eureka_server=os.getenv("EUREKA_CLIENT_SERVICE_URL") or "",
-    app_name="assets-manager",
-    instance_port=8002,
+    eureka_server=os.getenv("EUREKA_CLIENT_SERVICE_URL", ""),
+    app_name=os.getenv("APP_NAME", "assets-manager"),
 )
 
 
