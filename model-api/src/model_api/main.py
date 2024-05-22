@@ -1,5 +1,6 @@
-from model_api.module import ModelAPIModule
+from fastapi import FastAPI
 
-module = ModelAPIModule()
-app = module.app
+from .module import provide_injector
 
+injector = provide_injector()
+app = injector.get(FastAPI)
