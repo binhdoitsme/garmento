@@ -53,7 +53,7 @@ class ProductionModule(Module):
             else:
                 yield
 
-        app = FastAPI()
+        app = FastAPI(lifespan=lifespan)
         app.include_router(model_router.router)
         return app
 
