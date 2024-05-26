@@ -1,0 +1,52 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: garmento-ingress
+  labels:
+    name: garmento-ingress
+    namespace: garmento
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/preserve-trailing-slash: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: garmento.io
+    http:
+      paths:
+      # - pathType: ImplementationSpecific
+      #   path: "/assets(/|$)(.*)"
+      #   backend:
+      #     service:
+      #       name: asset-manager
+      #       port: 
+      #         number: 8000
+      # - pathType: ImplementationSpecific
+      #   path: "/preprocessor(/|$)(.*)"
+      #   backend:
+      #     service:
+      #       name: preprocessor
+      #       port: 
+      #         number: 8000
+      # - pathType: ImplementationSpecific
+      #   path: "/model-api(/|$)(.*)"
+      #   backend:
+      #     service:
+      #       name: model-api
+      #       port: 
+      #         number: 8000
+      - pathType: ImplementationSpecific
+        path: "/api/services(/|$)(.*)"
+        backend:
+          service:
+            name: service-registry
+            port: 
+              number: 8761
+      - pathType: ImplementationSpecific
+        path: "/api/(.*)(/|$)"
+        backend:
+          service:
+            name: try-on-api
+            port: 
+              number: 8000

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-api
+  namespace: garmento
+spec:
+  selector:
+    matchLabels:
+      app: model-api
+  template:
+    metadata:
+      labels:
+        app: model-api
+    spec:
+      containers:
+        - name: model-api
+          image: garmento.io/model-api:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL
+              value: http://10.96.3.0:443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-api
+  namespace: garmento
+spec:
+  selector:
+    app: model-api
+  type: ClusterIP
+  clusterIP: 10.96.4.0
+  ports:
+  - name: rest-api
+    port: 443
+    protocol: TCP
+    targetPort: 8000
+

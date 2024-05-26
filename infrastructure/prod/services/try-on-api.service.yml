@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: try-on-api
+  namespace: garmento
+spec:
+  selector:
+    matchLabels:
+      app: try-on-api
+  template:
+    metadata:
+      labels:
+        app: try-on-api
+    spec:
+      containers:
+        - name: try-on-api
+          image: garmento.io/try-on-server:latest
+          imagePullPolicy: Never
+          # resources:
+          #   limits:
+          #     memory: "1Gi"
+          #     cpu: "1000m"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_CONNECTION_STR
+              value: jdbc:mysql://localhost:3306
+            - name: EUREKA_CLIENT_SERVICE_URL
+              value: http://10.96.3.0:443/eureka
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "1"
+            - name: MYSQL_USER
+              value: tryon
+            - name: MYSQL_PASSWORD
+              value: tryon
+            - name: MYSQL_DATABASE
+              value: try_on
+          # ports:
+          #   - containerPort: 3306
+          # resources:
+          #   limits:
+          #     memory: "4Gi"
+          #     cpu: "2000m"
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: try-on-db-volume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: try-on-api
+  namespace: garmento
+spec:
+  selector:
+    app: try-on-api
+  type: ClusterIP
+  clusterIP: 10.96.5.0
+  ports:
+    - name: rest-api
+      port: 443
+      protocol: TCP
+      targetPort: 8000

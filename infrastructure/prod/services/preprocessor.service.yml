@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: preprocessor
+  namespace: garmento
+spec:
+  selector:
+    matchLabels:
+      app: preprocessor
+  template:
+    metadata:
+      labels:
+        app: preprocessor
+    spec:
+      containers:
+        - name: preprocessor
+          image: garmento.io/preprocessor:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: "4Gi"
+              cpu: "1500m"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: EUREKA_CLIENT_SERVICE_URL
+              value: http://10.96.3.0:443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: preprocessor
+  namespace: garmento
+spec:
+  selector:
+    app: preprocessor
+  type: ClusterIP
+  clusterIP: 10.96.2.0
+  ports:
+  - name: rest-api
+    port: 443
+    protocol: TCP
+    targetPort: 8000
+
