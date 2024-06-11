@@ -4,8 +4,6 @@ FROM python:$PYTHON_BASE AS base
 
 # install required dependencies
 RUN apt update && apt upgrade
-# RUN apt install git gcc g++ python3-dev default-libmysqlclient-dev pkg-config \
-#     ffmpeg libsm6 libxext6 -y
 
 # build stage
 FROM base AS builder
