@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from io import UnsupportedOperation
 import logging
 import os
@@ -20,7 +21,42 @@ class PreprocessingService:
     BASE_FOLDER = os.getenv("BASE_FOLDER", "")
     IMAGE_SIZE = (768, 1024)
 
-    def process(self, job_id: str):
+    async def process_garment(self, job: PreprocessingJob, base_folder: str):
+        # process garment
+        garment_mask_output_file = os.path.join(base_folder, "garment_mask.jpg")
+        garment_only_output_file = os.path.join(base_folder, "garment_only.jpg")
+        extract_garment_mask(
+            input_image=job.garment_image,
+            output_mask_image=garment_mask_output_file,
+            output_garment_only_image=garment_only_output_file,
+        )
+        return garment_only_output_file
+
+    async def process_poses(self, job: PreprocessingJob, base_folder: str):
+        # pose keypoints
+        pose_output_file = os.path.join(base_folder, "keypoints.json")
+        extract_poses(input_file=job.ref_image, output_file=pose_output_file)
+        return pose_output_file
+
+    async def process_densepose(self, job: PreprocessingJob, base_folder: str):
+        # densepose
+        densepose_output_file = os.path.join(base_folder, "densepose.jpg")
+        run_densepose(
+            input_file=job.ref_image,
+            output_file=densepose_output_file,
+        )
+        return densepose_output_file
+
+    async def process_segmentation(self, job: PreprocessingJob, base_folder: str):
+        # segmentation
+        segmentation_output_file = os.path.join(base_folder, "segmented.jpg")
+        do_human_segmentation_inference(
+            img_path=job.ref_image,
+            output_file=segmentation_output_file,
+        )
+        return segmentation_output_file
+
+    async def process(self, job_id: str):
         print(f"--- Processing job ID: {job_id} ---")
         job = self.repository.find_by_id(UUID(job_id))
         if not job:
@@ -30,32 +66,16 @@ class PreprocessingService:
         self.repository.save(job)
         try:
             base_folder = os.path.join(self.BASE_FOLDER, job_id)
-            # process garment
-            garment_mask_output_file = os.path.join(base_folder, "garment_mask.jpg")
-            garment_only_output_file = os.path.join(base_folder, "garment_only.jpg")
-            extract_garment_mask(
-                input_image=job.garment_image,
-                output_mask_image=garment_mask_output_file,
-                output_garment_only_image=garment_only_output_file,
-            )
-
-            # process ref image
-            # poses
-            pose_output_file = os.path.join(base_folder, "keypoints.json")
-            extract_poses(input_file=job.ref_image, output_file=pose_output_file)
-
-            # densepose
-            densepose_output_file = os.path.join(base_folder, "densepose.jpg")
-            run_densepose(
-                input_file=job.ref_image,
-                output_file=densepose_output_file,
-            )
-
-            # segmentation
-            segmentation_output_file = os.path.join(base_folder, "segmented.jpg")
-            do_human_segmentation_inference(
-                img_path=job.ref_image,
-                output_file=segmentation_output_file,
+            (
+                garment_only_output_file,
+                pose_output_file,
+                densepose_output_file,
+                segmentation_output_file,
+            ) = await asyncio.gather(
+                self.process_garment(job, base_folder),
+                self.process_poses(job, base_folder),
+                self.process_densepose(job, base_folder),
+                self.process_segmentation(job, base_folder),
             )
 
             job.success_with(
@@ -91,9 +111,12 @@ class PreprocessingService:
         job = PreprocessingJob(
             ref_image=ref_image_file, garment_image=garment_image_file, id=job_id
         )
-        # self.scheduler.schedule(str(job_id))
         self.repository.save(job)
-        return str(job.id), lambda: self.process(str(job_id))
+
+        async def do_process():
+            await self.process(str(job_id))
+
+        return str(job.id), do_process
 
     def get_job(self, job_id: str):
         return self.repository.find_by_id(UUID(job_id))

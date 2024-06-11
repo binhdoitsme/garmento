@@ -33,5 +33,5 @@ class JobRepositoryOnSQLA(JobRepository):
     
     def __setstate__(self, state: dict[str, Any]):
         self.__dict__.update(state)
-        from ..module import injector
+        from ..main import injector
         self.session = injector.get(Session)

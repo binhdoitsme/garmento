@@ -151,7 +151,7 @@ def inference(
     img_path: str,
     output_path: str,
     output_name: str,
-    device="mps",
+    device="cpu",
     size=(384, 512),
 ):
     """
@@ -244,7 +244,7 @@ def inference(
 
     output_image = Image.fromarray(vis_res[0])
     output_image = to_seg_grayscale(output_image)
-    output_image.save(f"{output_path}/{output_name}.png")
+    output_image.save(f"{output_path}/{output_name}.jpg")
     # cv2.imwrite(f"{output_path}/{output_name}_gray.png", results[0, :, :])
 
     end_time = timeit.default_timer()
@@ -267,7 +267,7 @@ def do_human_segmentation_inference(
     img_path: str,
     output_file: str,
     model_path: str = "models/graphonomy/inference.pth",
-    device: str = "mps",
+    device: str = "cpu",
 ):
     """
     Do human segmentation inference.

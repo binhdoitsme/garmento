@@ -36,12 +36,12 @@ class PreprocessingRouter:
             job = self.service.get_job(str(job_id))
             return JobResponse(
                 id=str(job.id),
-                ref_image=job.ref_image,
-                garment_image=job.garment_image,
-                masked_garment_image=job.masked_garment_image,
-                densepose_image=job.densepose_image,
-                segmented_image=job.segmented_image,
-                pose_keypoints=job.pose_keypoints,
+                refImage=job.ref_image,
+                garmentImage=job.garment_image,
+                maskedGarmentImage=job.masked_garment_image,
+                denseposeImage=job.densepose_image,
+                segmentedImage=job.segmented_image,
+                poseKeypoints=job.pose_keypoints,
             )
         except NotFound as e:
             raise HTTPException(404, ": ".join(str(arg) for arg in e.args))
