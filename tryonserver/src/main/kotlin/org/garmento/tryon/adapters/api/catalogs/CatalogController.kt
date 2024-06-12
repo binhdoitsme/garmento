@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import java.net.URL
+import java.net.URI
 
 @RestController
 @RequestMapping("/catalogs")
@@ -31,7 +31,7 @@ class CatalogController @Autowired constructor(
             val status: String,
             val createdBy: CreatedByUser,
             // first item in catalog or null if the catalog is empty
-            val thumbnail: URL? = null,
+            val thumbnail: URI? = null,
         ) {
             companion object {
                 fun fromDomain(catalog: Catalog, user: User) = CatalogResponse(
@@ -46,7 +46,7 @@ class CatalogController @Autowired constructor(
 
         data class ImageResponse(
             val id: String,
-            val url: URL,
+            val url: URI,
         )
 
         data class CatalogWithImagesResponse(

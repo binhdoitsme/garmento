@@ -35,7 +35,7 @@ class TokenController @Autowired constructor(
             val clientToken = tokenHandler.createToken(userInfo)
             // Set JWT token in an HTTP-only cookie
             val cookie = ResponseCookie.from("accessToken", clientToken).httpOnly(true)
-                .secure(true) // Set to true if using HTTPS
+//                .secure(true) // Set to true if using HTTPS
                 .maxAge(3600) // Set cookie expiration time (in seconds) as per your requirement
                 .path("/") // Set cookie path as per your requirement
                 .build()

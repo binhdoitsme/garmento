@@ -1,5 +1,5 @@
 package org.garmento.tryon.services.assets
 
-import java.net.URL
+import java.net.URI
 
-data class Image(val id: ImageId, val url: URL)
+data class Image(val id: ImageId, val url: URI)

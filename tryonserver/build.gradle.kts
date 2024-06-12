@@ -26,10 +26,13 @@ dependencies {
     implementation("org.springframework:spring-jms")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-artemis")
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0")
+    implementation("org.springframework.boot:spring-boot-starter-amqp")
+    testImplementation("org.springframework.amqp:spring-rabbit-test")
+//    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.0")
     compileOnly("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.1")
@@ -43,6 +46,8 @@ dependencies {
     implementation("com.google.oauth-client:google-oauth-client:1.35.0")
     implementation("com.google.api-client:google-api-client:2.4.0")
     implementation("com.google.apis:google-api-services-oauth2:v2-rev20200213-2.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.8.1")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 

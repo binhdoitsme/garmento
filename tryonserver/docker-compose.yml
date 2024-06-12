@@ -1,0 +1,17 @@
+version: "3.9"
+name: try-on-server
+services:
+  db:
+    container_name: try-on-server-db
+    image: mysql:8
+    tty: true
+    platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: "1"
+      MYSQL_DATABASE: tryon
+      MYSQL_USER: tryon
+      MYSQL_PASSWORD: tryon
+    volumes:
+      - ./data:/var/lib/mysql
+    ports:
+      - "6603:3306"

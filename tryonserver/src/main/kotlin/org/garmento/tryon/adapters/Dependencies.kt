@@ -3,15 +3,12 @@ package org.garmento.tryon.adapters
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import jakarta.jms.ConnectionFactory
+import org.garmento.tryon.services.assets.ImageRepository
 import org.garmento.tryon.services.catalogs.CatalogRepository
 import org.garmento.tryon.services.catalogs.CatalogServices
-import org.garmento.tryon.inference.InferenceServices
-import org.garmento.tryon.inference.ModelRegistry
+import org.garmento.tryon.services.tryon.*
 import org.garmento.tryon.services.users.UserRepository
 import org.garmento.tryon.services.users.UserServices
-import org.garmento.tryon.vtryon.TryOnRepository
-import org.garmento.tryon.vtryon.TryOnServices
-import org.garmento.tryon.vtryon.TryOnStore
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer
 import org.springframework.context.annotation.Bean
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory
@@ -19,15 +16,11 @@ import org.springframework.jms.support.converter.MappingJackson2MessageConverter
 import org.springframework.jms.support.converter.MessageType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import org.springframework.web.reactive.function.client.WebClient
 
 
 @Component
 class Dependencies {
-    @Bean
-    fun createTryOnServices(
-        repository: TryOnRepository, userServices: UserServices, tryOnStore: TryOnStore
-    ) = TryOnServices(repository, userServices, tryOnStore)
-
     @Bean
     fun createUserServices(repository: UserRepository) = UserServices(repository)
 
@@ -35,8 +28,18 @@ class Dependencies {
     fun createCatalogServices(repository: CatalogRepository) = CatalogServices(repository)
 
     @Bean
+    fun createTryOnServices(
+        modelRegistry: ModelRegistry,
+        preprocessor: Preprocessor,
+        imageRepository: ImageRepository,
+        jobRepository: TryOnJobRepository,
+        scheduler: TryOnScheduler,
+    ): TryOnServices = TryOnServices(imageRepository, jobRepository, scheduler)
+
+    @Bean
     fun createJmsListenerContainerFactory(
-        connectionFactory: ConnectionFactory, configurer: DefaultJmsListenerContainerFactoryConfigurer
+        connectionFactory: ConnectionFactory,
+        configurer: DefaultJmsListenerContainerFactoryConfigurer,
     ) = DefaultJmsListenerContainerFactory().also { factory ->
         // This provides all autoconfigured defaults to this factory, including the message converter
         configurer.configure(factory, connectionFactory)
@@ -53,9 +56,7 @@ class Dependencies {
     fun createRestClient() = RestClient.builder().build()
 
     @Bean
-    fun createInferenceService(
-        modelRegistry: ModelRegistry, tryOnRepository: TryOnRepository, tryOnStore: TryOnStore
-    ) = InferenceServices(modelRegistry, tryOnRepository, tryOnStore)
+    fun createWebClient() = WebClient.builder().build()
 
     @Bean
     fun createTransport() = GoogleNetHttpTransport.newTrustedTransport()!!
