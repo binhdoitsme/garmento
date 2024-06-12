@@ -15,8 +15,12 @@ class FileResultStorageService(ResultStorageService):
     def err_path(self, id: str):
         return self.path(id).replace(".jpg", ".txt")
 
-    def store(self, id: str, result: Image.Image | str):
+    def init_store(self, id: str):
         os.makedirs(os.path.dirname(file_path := self.path(id)))
+        return file_path
+
+    def store(self, id: str, result: Image.Image | str):
+        file_path = self.path(id)
         if isinstance(result, str):
             with open(self.err_path(id), mode="w") as writer:
                 writer.write(result)

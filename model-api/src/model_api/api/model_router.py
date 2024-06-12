@@ -12,6 +12,7 @@ from ..services.inference_service import InferenceService
 
 class JobResult(pydantic.BaseModel):
     id: str
+    resultURL: str | None = None
     status: Literal["IN_PROGRESS", "SUCCESS", "FAILED"] = "IN_PROGRESS"
 
 
@@ -31,7 +32,7 @@ class ModelRouter:
     def health_check(self):
         return {"status": "up"}
 
-    def create_try_on_job(
+    async def create_try_on_job(
         self,
         id: Annotated[str, Path()],
         ref_image: Annotated[UploadFile, File()],
@@ -45,12 +46,12 @@ class ModelRouter:
         background_tasks.add_task(
             self.inference_service.do_infer,
             id=id,
-            ref_image=io.BytesIO(ref_image.file.read()),
-            garment_image=io.BytesIO(garment_image.file.read()),
-            densepose_image=io.BytesIO(densepose_image.file.read()),
-            masked_garment_image=io.BytesIO(masked_garment_image.file.read()),
-            segmented_image=io.BytesIO(segmented_image.file.read()),
-            pose_keypoints=io.BytesIO(pose_keypoints.file.read()),
+            ref_image=io.BytesIO(await ref_image.read()),
+            garment_image=io.BytesIO(await garment_image.read()),
+            densepose_image=io.BytesIO(await densepose_image.read()),
+            masked_garment_image=io.BytesIO(await masked_garment_image.read()),
+            segmented_image=io.BytesIO(await segmented_image.read()),
+            pose_keypoints=io.BytesIO(await pose_keypoints.read()),
         )
         return JobResult(id=id)
 
@@ -61,7 +62,7 @@ class ModelRouter:
                 return JobResult(id=id)
             if isinstance(maybe_result, str):
                 return JobResult(id=id, status="FAILED")
-            return JobResult(id=id, status="SUCCESS")
+            return JobResult(id=id, resultURL=f"/try-on/{id}/result", status="SUCCESS")
         except FileNotFoundError:
             raise HTTPException(status.HTTP_404_NOT_FOUND)
 

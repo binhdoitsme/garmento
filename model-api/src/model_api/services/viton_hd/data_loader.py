@@ -173,9 +173,9 @@ def to_model_inputs(
     load_height=1024,
     semantic_nc=13,
 ) -> VITONHDInputs:
-    c = Image.open(garment_image).convert("RGB")
+    c = Image.open(garment_image).convert("RGB").resize((load_width, load_height))
     c = transforms.Resize(load_width, interpolation=InterpolationMode.BILINEAR)(c)
-    cm = Image.open(masked_garment_image)
+    cm = Image.open(masked_garment_image).convert("L").resize((load_width, load_height))
     cm = transforms.Resize(load_width, interpolation=InterpolationMode.NEAREST)(cm)
 
     cloth = transform(c)  # [-1,1]

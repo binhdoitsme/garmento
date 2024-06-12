@@ -1,17 +1,17 @@
-ARG PYTHON_BASE=3.10-slim
+ARG PYTHON_BASE=3.11-slim
 # Base Image (with base APT packages)
 FROM python:$PYTHON_BASE AS base
 
 # install required dependencies
 RUN apt update && apt upgrade
-RUN apt install git gcc g++ python3-dev default-libmysqlclient-dev pkg-config \
-    ffmpeg libsm6 libxext6 -y
+RUN apt install git gcc g++ python3-dev pkg-config ffmpeg libsm6 libxext6 -y
 
 # build stage
 FROM base AS builder
 
 # install PDM
-RUN pip install -U pdm
+RUN pip install -U pdm 
+# RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 # disable update check
 ENV PDM_CHECK_UPDATE=false
 # copy files

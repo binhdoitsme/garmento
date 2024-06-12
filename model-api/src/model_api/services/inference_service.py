@@ -31,6 +31,7 @@ class InferenceService:
         version="latest",
     ):
         try:
+            self.storage_service.init_store(id)
             model_inputs = to_model_inputs(
                 ref_image,
                 garment_image,
