@@ -23,8 +23,31 @@ spec:
           ports:
             - containerPort: 8000
           env:
-            - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://10.96.3.0:443
+            - name: DB_CONNECTION_STR
+              value: mysql://preprocessor:preprocessor@127.0.0.1:3306/preprocessing
+        - name: mysql
+          image: mysql:8.4
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "1"
+            - name: MYSQL_USER
+              value: preprocessor
+            - name: MYSQL_PASSWORD
+              value: preprocessor
+            - name: MYSQL_DATABASE
+              value: preprocessing
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: preprocessing-volume-claim
 ---
 apiVersion: v1
 kind: Service
@@ -37,8 +60,11 @@ spec:
   type: ClusterIP
   clusterIP: 10.96.2.0
   ports:
-  - name: rest-api
-    port: 443
-    protocol: TCP
-    targetPort: 8000
-
+    - name: rest-api
+      port: 443
+      protocol: TCP
+      targetPort: 8000
+    - name: rest-api-80
+      port: 80
+      protocol: TCP
+      targetPort: 8000

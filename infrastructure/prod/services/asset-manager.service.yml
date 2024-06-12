@@ -24,7 +24,7 @@ spec:
             - containerPort: 8000
           env:
             - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://10.96.3.0:443
+              value: http://service-registry:443
 ---
 apiVersion: v1
 kind: Service
@@ -37,8 +37,11 @@ spec:
   type: ClusterIP
   clusterIP: 10.96.1.0
   ports:
-  - name: rest-api
-    port: 443
-    protocol: TCP
-    targetPort: 8000
-
+    - name: rest-api
+      port: 443
+      protocol: TCP
+      targetPort: 8000
+    - name: rest-api-80
+      port: 80
+      protocol: TCP
+      targetPort: 8000

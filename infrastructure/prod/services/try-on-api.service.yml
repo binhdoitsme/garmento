@@ -16,17 +16,23 @@ spec:
         - name: try-on-api
           image: garmento.io/try-on-server:latest
           imagePullPolicy: Never
-          # resources:
-          #   limits:
-          #     memory: "1Gi"
-          #     cpu: "1000m"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           ports:
             - containerPort: 8000
           env:
             - name: DB_CONNECTION_STR
-              value: jdbc:mysql://localhost:3306
-            - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://10.96.3.0:443/eureka
+              value: jdbc:mysql://localhost:3306/try_on
+            - name: RABBITMQ_USER
+              value: tryon
+            - name: RABBITMQ_PASS
+              value: tryon
+            - name: RABBITMQ_VHOST
+              value: /tryon
+            - name: AQMP_CONNECTION_STR
+              value: amqp://tryon:tryon@localhost:5672/tryon
         - name: mysql
           image: mysql:8.4
           imagePullPolicy: IfNotPresent
@@ -41,13 +47,27 @@ spec:
               value: try_on
           # ports:
           #   - containerPort: 3306
-          # resources:
-          #   limits:
-          #     memory: "4Gi"
-          #     cpu: "2000m"
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           volumeMounts:
             - name: mysql-persistent-storage
               mountPath: /var/lib/mysql
+        - name: message-queue
+          image: rabbitmq:3.12-alpine
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: tryon
+            - name: RABBITMQ_DEFAULT_PASS
+              value: tryon
+            - name: RABBITMQ_DEFAULT_VHOST
+              value: /tryon
       volumes:
         - name: mysql-persistent-storage
           persistentVolumeClaim:
@@ -66,5 +86,9 @@ spec:
   ports:
     - name: rest-api
       port: 443
+      protocol: TCP
+      targetPort: 8000
+    - name: rest-api-80
+      port: 80
       protocol: TCP
       targetPort: 8000
