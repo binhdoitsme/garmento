@@ -142,7 +142,7 @@ def to_seg_grayscale(image: Image.Image):
             else:
                 gray_img[y_idx][x_idx] = 0
 
-    img = cv2.resize(gray_img, (768, 1024), interpolation=cv2.INTER_NEAREST)
+    img = cv2.resize(gray_img, (img_w, img_h), interpolation=cv2.INTER_NEAREST)
     return Image.fromarray(np.array(img, dtype=np.uint8), "L")
 
 
@@ -242,10 +242,10 @@ def inference(
     results = predictions.cpu().numpy()
     vis_res = decode_labels(results)
 
-    output_image = Image.fromarray(vis_res[0])
-    output_image = to_seg_grayscale(output_image)
-    output_image.save(f"{output_path}/{output_name}.jpg")
-    # cv2.imwrite(f"{output_path}/{output_name}_gray.png", results[0, :, :])
+    # output_image = Image.fromarray(vis_res[0])
+    # output_image = to_seg_grayscale(output_image)
+    # output_image.save(f"{output_path}/{output_name}.jpg")
+    cv2.imwrite(f"{output_path}/{output_name}.jpg", results[0, :, :])
 
     end_time = timeit.default_timer()
     print(
