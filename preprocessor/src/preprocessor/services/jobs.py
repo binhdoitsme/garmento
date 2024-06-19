@@ -17,6 +17,7 @@ class NotProcessing(Exception): ...
 
 class AlreadyProcessing(Exception): ...
 
+
 class AlreadyAborted(Exception): ...
 
 
@@ -41,17 +42,25 @@ class PreprocessingJob:
     def success_with(
         self,
         masked_garment_image: str,
-        densepose_image: str,
-        segmented_image: str,
-        pose_keypoints: str,
+        densepose_image: str | None = None,
+        segmented_image: str | None = None,
+        pose_keypoints: str | None = None,
     ):
         if self.status not in (JobStatus.IN_PROGRESS,):
             raise NotProcessing()
-        self.masked_garment_image = masked_garment_image
-        self.densepose_image = densepose_image
-        self.segmented_image = segmented_image
-        self.pose_keypoints = pose_keypoints
-        self.status = JobStatus.SUCCESS
+        not_success = (
+            (not densepose_image and not self.densepose_image)
+            or (not segmented_image and not self.segmented_image)
+            or (not pose_keypoints and not self.pose_keypoints)
+        )
+        if not_success:
+            self.failed()
+        else:
+            self.masked_garment_image = masked_garment_image
+            self.densepose_image = densepose_image or self.densepose_image
+            self.segmented_image = segmented_image or self.segmented_image
+            self.pose_keypoints = pose_keypoints or self.pose_keypoints
+            self.status = JobStatus.SUCCESS
 
     def failed(self):
         if self.status not in (JobStatus.IN_PROGRESS,):

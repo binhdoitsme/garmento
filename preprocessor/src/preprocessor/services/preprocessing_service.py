@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from functools import lru_cache
 from io import UnsupportedOperation
 import logging
 import os
@@ -15,11 +16,19 @@ from .jobs import PreprocessingJob
 from .pose_extractor import extract_poses, run_densepose
 
 
+class PresetNotFound(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__("Preset not found", *args)
+
+
 @dataclass
 class PreprocessingService:
     repository: JobRepository
     BASE_FOLDER = os.getenv("BASE_FOLDER", "")
     IMAGE_SIZE = (768, 1024)
+
+    def __hash__(self) -> int:
+        return id(self)
 
     async def process_garment(self, job: PreprocessingJob, base_folder: str):
         # process garment
@@ -56,7 +65,7 @@ class PreprocessingService:
         )
         return segmentation_output_file
 
-    async def process(self, job_id: str):
+    async def process(self, job_id: str, with_preset=False):
         print(f"--- Processing job ID: {job_id} ---")
         job = self.repository.find_by_id(UUID(job_id))
         if not job:
@@ -66,24 +75,28 @@ class PreprocessingService:
         self.repository.save(job)
         try:
             base_folder = os.path.join(self.BASE_FOLDER, job_id)
-            (
-                garment_only_output_file,
-                pose_output_file,
-                densepose_output_file,
-                segmentation_output_file,
-            ) = await asyncio.gather(
-                self.process_garment(job, base_folder),
-                self.process_poses(job, base_folder),
-                self.process_densepose(job, base_folder),
-                self.process_segmentation(job, base_folder),
-            )
+            if not with_preset:
+                (
+                    garment_only_output_file,
+                    pose_output_file,
+                    densepose_output_file,
+                    segmentation_output_file,
+                ) = await asyncio.gather(
+                    self.process_garment(job, base_folder),
+                    self.process_poses(job, base_folder),
+                    self.process_densepose(job, base_folder),
+                    self.process_segmentation(job, base_folder),
+                )
 
-            job.success_with(
-                masked_garment_image=garment_only_output_file,
-                densepose_image=densepose_output_file,
-                segmented_image=segmentation_output_file,
-                pose_keypoints=pose_output_file,
-            )
+                job.success_with(
+                    masked_garment_image=garment_only_output_file,
+                    densepose_image=densepose_output_file,
+                    segmented_image=segmentation_output_file,
+                    pose_keypoints=pose_output_file,
+                )
+            else:
+                garment_only_output_file = await self.process_garment(job, base_folder)
+                job.success_with(masked_garment_image=garment_only_output_file)
             self.repository.save(job)
             print(f"--- [DONE] Processed job ID: {job_id} ---")
         except Exception as e:
@@ -118,6 +131,40 @@ class PreprocessingService:
 
         return str(job.id), do_process
 
+    def create_job_with_preset(self, preset: str, garment_image: BinaryIO):
+        """
+        Returns the job for convenience scheduling outside this. \
+        Might need to improve so that a dedicated scheduler also works.
+        """
+        if preset not in self.list_presets():
+            raise PresetNotFound(preset)
+        preset_folder = f"images/presets/{preset}"
+        job_id = uuid4()
+        base_folder = os.path.join(self.BASE_FOLDER, str(job_id))
+        os.makedirs(base_folder)
+        garment_image_file = os.path.join(base_folder, "garment.jpg")
+        with open(garment_image_file, "wb") as file:
+            while chunk := garment_image.read(1024):
+                file.write(chunk)
+        ref_image_file = os.path.join(preset_folder, "ref.jpg")
+        densepose_image=os.path.join(preset_folder, "densepose.jpg")
+        pose_keypoints=os.path.join(preset_folder, "keypoints.json")
+        segmented_image=os.path.join(preset_folder, "segmented.jpg")
+        job = PreprocessingJob(
+            id=job_id,
+            ref_image=ref_image_file,
+            garment_image=garment_image_file,
+            densepose_image=densepose_image,
+            pose_keypoints=pose_keypoints,
+            segmented_image=segmented_image,
+        )
+        self.repository.save(job)
+
+        async def do_process():
+            await self.process(str(job_id), with_preset=True)
+
+        return str(job.id), do_process
+
     def get_job(self, job_id: str):
         return self.repository.find_by_id(UUID(job_id))
 
@@ -126,3 +173,16 @@ class PreprocessingService:
         # job = self.repository.find_by_id(UUID(job_id))
         # job.aborted()
         # self.repository.save(job)
+
+    @lru_cache
+    def list_presets(self, root_dir="presets") -> list[str]:
+        return [
+            maybe_preset.removeprefix(f"{root_dir}/")
+            for maybe_preset, _, preset_files in os.walk(root_dir)
+            if "ref.jpg" in preset_files
+        ]
+    
+    def get_preset_ref_image(self, preset_name: str, root_dir="presets"):
+        if preset_name not in self.list_presets():
+            raise PresetNotFound(preset_name)
+        return f"{root_dir}/{preset_name}/ref.jpg"
