@@ -20,16 +20,16 @@ class PreprocessingRouter:
         self.router.get("/jobs/{job_id}")(self.get_job_status)
         self.router.delete("/jobs/{job_id}")(self.abort_job)
         self.router.get("/presets")(self.list_presets)
-        self.router.get("/presets/{preset}/reference")(self.get_preset_ref_image)
+        self.router.get("/presets/{preset}")(self.get_preset_meta)
 
     def list_presets(self):
-        return self.service.list_presets()
+        return list(self.service.list_presets().values())
 
-    def get_preset_ref_image(self, preset: str):
-        try:
-            return FileResponse(self.service.get_preset_ref_image(preset_name=preset))
-        except PresetNotFound as e:
-            raise HTTPException(404, f"{e.args[0]}: {e.args[1]}")
+    def get_preset_meta(self, preset: str):
+        presets = self.service.list_presets()
+        if preset not in presets:
+            raise HTTPException(404, f"preset not found: {preset}")
+        return presets[preset]
 
     def create_job(
         self,

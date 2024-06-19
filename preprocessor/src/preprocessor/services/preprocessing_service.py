@@ -174,13 +174,23 @@ class PreprocessingService:
         # job.aborted()
         # self.repository.save(job)
 
+    def to_preset_meta(self, preset: str):
+        return {
+            "name": preset,
+            "refImage": f"/images/presets/{preset}/ref.jpg",
+            "denseposeImage": f"/images/presets/{preset}/densepose.jpg",
+            "segmented": f"/images/presets/{preset}/segmented.jpg",
+            "poseKeypoints": f"/images/presets/{preset}/keypoints.json",
+        }
+
     @lru_cache
-    def list_presets(self, root_dir="presets") -> list[str]:
-        return [
+    def list_presets(self, root_dir="presets") -> dict[str, dict[str, str]]:
+        presets = [
             maybe_preset.removeprefix(f"{root_dir}/")
             for maybe_preset, _, preset_files in os.walk(root_dir)
             if "ref.jpg" in preset_files
         ]
+        return {preset: self.to_preset_meta(preset) for preset in presets}
     
     def get_preset_ref_image(self, preset_name: str, root_dir="presets"):
         if preset_name not in self.list_presets():
