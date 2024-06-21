@@ -1,14 +1,22 @@
-from typing import Annotated
+import os
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import BackgroundTasks, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.routing import APIRouter
 from injector import inject
 
 from ..services.job_repository import NotFound
-from ..services.preprocessing_service import PreprocessingService, PresetNotFound
+from ..services.preprocessing_service import PreprocessingService
 from .responses import JobResponse
+
+PresetImageFileName = Literal[
+    "ref.jpg",
+    "densepose.jpg",
+    "segmented.jpg",
+    "keypoints.json",
+]
 
 
 @inject
@@ -21,6 +29,13 @@ class PreprocessingRouter:
         self.router.delete("/jobs/{job_id}")(self.abort_job)
         self.router.get("/presets")(self.list_presets)
         self.router.get("/presets/{preset}")(self.get_preset_meta)
+        self.router.get("/presets/{preset}/{name}")(self.serve_preset_image)
+
+    def serve_preset_image(self, preset: str, name: PresetImageFileName):
+        filename = os.path.join("presets", preset, name)
+        if not os.path.exists(filename):
+            raise HTTPException(404, detail="Not Found")
+        return FileResponse(filename)
 
     def list_presets(self):
         return list(self.service.list_presets().values())
@@ -35,10 +50,13 @@ class PreprocessingRouter:
         self,
         garment_image: Annotated[UploadFile, File()],
         background_tasks: BackgroundTasks,
-        preset_id: str | None = None,
-        ref_image: UploadFile = File(None),
+        preset_id: Annotated[str | None, Form()] = None,
+        ref_image: Annotated[UploadFile | None, File()] = None,
     ) -> JobResponse:
-        if not preset_id:
+        if preset_id is None and ref_image is None:
+            raise HTTPException(400)
+        if preset_id is None:
+            assert ref_image is not None
             job_id, background_task = self.service.create_job(
                 ref_image=ref_image.file, garment_image=garment_image.file
             )

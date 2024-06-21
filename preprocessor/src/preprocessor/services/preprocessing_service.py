@@ -138,7 +138,7 @@ class PreprocessingService:
         """
         if preset not in self.list_presets():
             raise PresetNotFound(preset)
-        preset_folder = f"images/presets/{preset}"
+        preset_folder = f"presets/{preset}"
         job_id = uuid4()
         base_folder = os.path.join(self.BASE_FOLDER, str(job_id))
         os.makedirs(base_folder)
@@ -177,10 +177,10 @@ class PreprocessingService:
     def to_preset_meta(self, preset: str):
         return {
             "name": preset,
-            "refImage": f"/images/presets/{preset}/ref.jpg",
-            "denseposeImage": f"/images/presets/{preset}/densepose.jpg",
-            "segmented": f"/images/presets/{preset}/segmented.jpg",
-            "poseKeypoints": f"/images/presets/{preset}/keypoints.json",
+            "refImage": f"/presets/{preset}/ref.jpg",
+            "denseposeImage": f"/presets/{preset}/densepose.jpg",
+            "segmented": f"/presets/{preset}/segmented.jpg",
+            "poseKeypoints": f"/presets/{preset}/keypoints.json",
         }
 
     @lru_cache
