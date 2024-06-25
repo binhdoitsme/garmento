@@ -1,11 +1,12 @@
 "use client";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Inter } from "next/font/google";
-import { useEffect, useReducer } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 import Footer from "./components/footer";
 import Navigation from "./components/navigation";
 import {
   GlobalContext,
+  GlobalContextActionType,
   GlobalDispatchContext,
   User,
   defaultGlobalState,
@@ -13,6 +14,8 @@ import {
 } from "./global-state";
 import "./globals.css";
 import Template from "./template";
+import { TokensApi } from "./login/api";
+import { usePathname, useRouter } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,25 +24,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [globalState, dispatch] = useReducer(globalReducer, {
-    ...defaultGlobalState,
-    currentUser: JSON.parse(localStorage.getItem("currentUser") ?? "null") as
-      | User
-      | undefined,
-  });
+  const [globalState, dispatch] = useReducer(globalReducer, defaultGlobalState);
+  const tokensApi = useMemo(() => new TokensApi(), []);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
-    if (globalState.currentUser) {
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify(globalState.currentUser)
-      );
-    } else {
-      localStorage.removeItem("currentUser");
-    }
-  }, [globalState.currentUser]);
+    // check /api/me first, if unauthorized then redirect to /login. Else redirect to /home
+    tokensApi
+      .me()
+      .catch((_) => undefined)
+      .then((currentUser) => {
+        dispatch({
+          type: GlobalContextActionType.SET_CURRENT_USER,
+          value: { currentUser },
+        });
 
-  useEffect(() => console.log(globalState), [globalState]);
+        if (!pathname.endsWith("/login") && !currentUser) {
+          throw Error();
+        }
+      })
+      .catch(() => router.push("/home"));
+  }, []);
 
   return (
     <GlobalContext.Provider value={globalState}>

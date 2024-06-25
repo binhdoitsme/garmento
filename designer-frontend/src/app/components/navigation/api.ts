@@ -1,4 +1,3 @@
-import { TokenResponse } from "@react-oauth/google";
 import axios, { Axios } from "axios";
 
 export class TokensApi {
@@ -11,24 +10,12 @@ export class TokensApi {
     })
   ) {}
 
-  exchangeToken = (
-    tokenResponse: Omit<
-      TokenResponse,
-      "error" | "error_description" | "error_uri"
-    >,
-    endpoint = "/api/tokens"
-  ) =>
+  logOut = (endpoint = "/api/tokens") =>
     this._axios
-      .post(endpoint, { token: tokenResponse.access_token })
+      .delete(endpoint)
       .then((response) => response.status === 204)
       .catch((err) => {
         console.log(err);
         return false;
       });
-
-  me = (endpoint = "/api/me") =>
-    this._axios.post(endpoint).then(({ data }) => ({
-      email: data.email as string,
-      name: data.name as string,
-    }));
 }

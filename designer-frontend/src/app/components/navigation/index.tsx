@@ -32,9 +32,6 @@ export default function Navigation() {
     if (currentUser && pathname.endsWith("/login")) {
       router.push("/catalogs");
     }
-    if (!pathname.endsWith("/login") && !currentUser) {
-      router.push("/home");
-    }
   }, [globalState, pathname, router, currentUser]);
 
   const navList = (
@@ -87,9 +84,12 @@ export default function Navigation() {
           >
             Garmento
           </Link>
-          <Typography className="ml-2 cursor-pointer py-0.5 text-sm">
-            {globalState?.breadcrumbs}
-          </Typography>
+
+          {globalState?.breadcrumbs && (
+            <Typography className="ml-2 cursor-pointer py-0.5 text-sm">
+              {globalState?.breadcrumbs}
+            </Typography>
+          )}
         </div>
         <div className="flex items-center gap-4">
           {currentUser && <div className="mr-4 hidden lg:block">{navList}</div>}

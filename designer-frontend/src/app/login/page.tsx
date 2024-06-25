@@ -9,7 +9,7 @@ import { Button } from "@material-tailwind/react";
 import { useGoogleLogin } from "@react-oauth/google";
 import Image from "next/image";
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { LoginApi } from "./api";
+import { TokensApi } from "./api";
 import Spinner from "../components/spinner";
 import { useRouter } from "next/navigation";
 
@@ -18,7 +18,7 @@ export default function Login() {
   const globalDispatch = useContext(GlobalDispatchContext);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const loginApi = useMemo(() => new LoginApi(), []);
+  const loginApi = useMemo(() => new TokensApi(), []);
   const onLoginSuccess = useCallback(
     () =>
       loginApi.me().then((me) =>

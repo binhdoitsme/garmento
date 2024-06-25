@@ -4,25 +4,25 @@ import {
   GlobalDispatchContext,
 } from "@/app/global-state";
 import {
+  Avatar,
   Menu,
   MenuHandler,
-  MenuList,
   MenuItem,
-  Avatar,
+  MenuList,
   Typography,
 } from "@material-tailwind/react";
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
+import { TokensApi } from "./api";
 
 export function ProfileMenu() {
   const globalDispatch = useContext(GlobalDispatchContext);
+  const api = useMemo(() => new TokensApi(), []);
   const doSignOut = useCallback(() => {
-    setTimeout(
-      () =>
-        globalDispatch?.({
-          type: GlobalContextActionType.SET_CURRENT_USER,
-          value: { currentUser: undefined },
-        }),
-      1000
+    api.logOut().then(() =>
+      globalDispatch?.({
+        type: GlobalContextActionType.SET_CURRENT_USER,
+        value: { currentUser: undefined },
+      })
     );
   }, [globalDispatch]);
 

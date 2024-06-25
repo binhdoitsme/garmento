@@ -7,6 +7,7 @@ export type User = {
 
 export type GlobalContextValue = {
   title: string;
+  isLoading: boolean;
   breadcrumbs?: string; // e.g. Designer > Try-on
   currentUser?: User;
 };
@@ -15,6 +16,8 @@ export enum GlobalContextActionType {
   SET_TITLE = "SET_TITLE",
   SET_CURRENT_USER = "SET_CURRENT_USER",
   SET_BREADCRUMBS = "SET_BREADCRUMBS",
+  LOADING_START = "LOADING_START",
+  LOADING_END = "LOADING_END",
 }
 
 export type GlobalContextReducer = (
@@ -34,6 +37,7 @@ export type GlobalDispatchPayload = {
 
 export const defaultGlobalState: GlobalContextValue = {
   title: "Garmento | A virtual try-on platform for businesses",
+  isLoading: false,
 };
 
 export const globalReducer: GlobalContextReducer = (state, action) => {
@@ -44,6 +48,10 @@ export const globalReducer: GlobalContextReducer = (state, action) => {
       return { ...state, breadcrumbs: action.value.breadcrumbs };
     case GlobalContextActionType.SET_CURRENT_USER:
       return { ...state, currentUser: action.value.currentUser };
+    case GlobalContextActionType.LOADING_START:
+      return { ...state, isLoading: true };
+    case GlobalContextActionType.LOADING_END:
+      return { ...state, isLoading: false };
     default:
       break;
   }

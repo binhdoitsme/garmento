@@ -3,26 +3,34 @@ import { Typography } from "@material-tailwind/react";
 import DesignSelect from "./design-selection";
 import ReferenceModelSelect from "./model-selection";
 import { TryOnResult } from "./try-on-result";
-import { useContext, useEffect } from "react";
-import { GlobalContextActionType, GlobalDispatchContext } from "../global-state";
+import { useContext, useEffect, useMemo, useState } from "react";
+import {
+  GlobalContextActionType,
+  GlobalDispatchContext,
+} from "../global-state";
+import { TryOnApi } from "./api/try-on";
 
 export default function TryOnPage() {
   const globalDispatch = useContext(GlobalDispatchContext);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<File>();
+  const [selectedPreset, setSelectedPreset] = useState<string>();
+  const tryOnApi = useMemo(() => new TryOnApi(), []);
 
   useEffect(() => {
     globalDispatch?.({
       type: GlobalContextActionType.SET_BREADCRUMBS,
       value: {
-        breadcrumbs: "Designer > Virtual Try-on"
-      }
+        breadcrumbs: "Designer > Virtual Try-on",
+      },
     });
     globalDispatch?.({
       type: GlobalContextActionType.SET_TITLE,
       value: {
-        title: "Garmento | Virtual Try-on"
-      }
+        title: "Garmento | Virtual Try-on",
+      },
     });
-  })
+  });
 
   return (
     <div className="px-4 py-4">
@@ -35,10 +43,22 @@ export default function TryOnPage() {
           className="grid grid-cols-2 xl:col-span-2 divide-x
           divide-gray-800 dark:divide-gray-100"
         >
-          <ReferenceModelSelect />
-          <DesignSelect />
+          <ReferenceModelSelect
+            selectedPreset={selectedPreset}
+            setSelectedPreset={setSelectedPreset}
+          />
+          <DesignSelect
+            selectedDesign={selectedDesign}
+            setSelectedDesign={setSelectedDesign}
+          />
         </div>
-        <TryOnResult />
+        <TryOnResult
+          isGenerating={isGenerating}
+          setIsGenerating={setIsGenerating}
+          api={tryOnApi}
+          garment={selectedDesign}
+          preset={selectedPreset}
+        />
       </div>
     </div>
   );
