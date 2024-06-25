@@ -35,8 +35,8 @@ class ModelRegistryOnRemoteAPI(
     private val baseURL: String = "http://$serviceId"
     private val basePreprocessorURL: String = "http://$preprocessingServiceId"
 
-    private suspend fun fetchImage(url: URL) =
-        httpClient.get().uri(url.toURI()).retrieve().bodyToMono(ByteArray::class.java)
+    private suspend fun fetchImage(url: URI) =
+        httpClient.get().uri(url).retrieve().bodyToMono(ByteArray::class.java)
             .doOnError {
                 throw IllegalArgumentException("Failed to fetch image from URL: $url")
             }.map { InputStreamResource(it.inputStream()) }.awaitSingle()
@@ -75,26 +75,22 @@ class ModelRegistryOnRemoteAPI(
         jobId: String,
     ): ModelRegistry.Companion.InferenceResult = mapOf(
         "ref_image" to fetchImage(
-            URI.create("$basePreprocessorURL/${preprocessingResult.refImage!!}").toURL()
+            URI.create("$basePreprocessorURL/${preprocessingResult.refImage!!}")
         ),
         "garment_image" to fetchImage(
-            URI.create("$basePreprocessorURL/${preprocessingResult.garmentImage!!}").toURL()
+            URI.create("$basePreprocessorURL/${preprocessingResult.garmentImage!!}")
         ),
         "densepose_image" to fetchImage(
             URI.create("$basePreprocessorURL/${preprocessingResult.denseposeImage!!}")
-                .toURL()
         ),
         "masked_garment_image" to fetchImage(
             URI.create("$basePreprocessorURL/${preprocessingResult.maskedGarmentImage!!}")
-                .toURL()
         ),
         "pose_keypoints" to fetchImage(
             URI.create("$basePreprocessorURL/${preprocessingResult.poseKeypoints!!}")
-                .toURL()
         ),
         "segmented_image" to fetchImage(
             URI.create("$basePreprocessorURL/${preprocessingResult.segmentedImage!!}")
-                .toURL()
         ),
     ).entries.fold(MultipartBodyBuilder()) { acc, (fieldName, data) ->
         acc.apply {

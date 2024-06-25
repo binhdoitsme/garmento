@@ -33,8 +33,14 @@ class PreprocessorOnRemoteAPI @Autowired constructor(
     private val baseURL: String = "http://$serviceId"
     private val baseAssetURL: String = "http://$assetServiceId"
 
+    private fun createImageURL(url: URI) = if (url.toString().startsWith("/presets")) {
+        URI.create("$baseURL$url")
+    } else {
+        URI.create(url.toString().replace(PUBLIC_BASE_ASSET_URL, baseAssetURL))
+    }
+
     private suspend fun fetchImage(url: URI) = httpClient.get()
-        .uri(URI.create(url.toString().replace(PUBLIC_BASE_ASSET_URL, baseAssetURL)))
+        .uri(createImageURL(url))
         .retrieve().bodyToMono(ByteArray::class.java).doOnError {
             throw IllegalArgumentException("Failed to fetch image from URL: $url")
         }.map { InputStreamResource(it.inputStream()) }.awaitSingle()
@@ -71,20 +77,45 @@ class PreprocessorOnRemoteAPI @Autowired constructor(
     override suspend fun preprocess(
         referenceImageURL: URI,
         garmentImageURL: URI,
-    ): Preprocessor.Companion.Result = mapOf(
-        ("ref_image" to fetchImage(referenceImageURL)),
-        ("garment_image" to fetchImage(garmentImageURL)),
-    ).entries.fold(MultipartBodyBuilder()) { acc, (fieldName, data) ->
-        acc.apply {
-            part(fieldName, data, MediaType.IMAGE_JPEG).header(
-                "Content-Disposition", "form-data; name=$fieldName; filename=$fieldName.jpg"
-            )
+    ): Preprocessor.Companion.Result =
+        createFormData(referenceImageURL, garmentImageURL).let(this::createJob)
+            .awaitSingle().let { jobId ->
+                // add polling logic here
+                findJob(jobId).map {
+                    requireNotNull(it?.refImage)
+                    it
+                }.retryWhen(Retry.backoff(10, Duration.ofSeconds(3)))
+            }.awaitSingle()
+
+    private suspend fun createFormData(
+        referenceImageURL: URI,
+        garmentImageURL: URI,
+    ) = referenceImageURL.toString().let {
+        if (it.startsWith("/presets")) {
+            // /images/preset/{presetId}/... => split by / and get 2nd
+            MultipartBodyBuilder().apply {
+                part(
+                    "garment_image",
+                    fetchImage(garmentImageURL),
+                    MediaType.IMAGE_JPEG
+                ).header(
+                    "Content-Disposition",
+                    "form-data; name=garment_image; filename=garment_image.jpg"
+                )
+                part("preset_id", it.split("/")[2])
+            }.build()
+        } else {
+            mapOf(
+                ("ref_image" to fetchImage(referenceImageURL)),
+                ("garment_image" to fetchImage(garmentImageURL)),
+            ).entries.fold(MultipartBodyBuilder()) { acc, (fieldName, data) ->
+                acc.apply {
+                    part(fieldName, data, MediaType.IMAGE_JPEG).header(
+                        "Content-Disposition",
+                        "form-data; name=$fieldName; filename=$fieldName.jpg"
+                    )
+                }
+            }.build()
         }
-    }.build().let(this::createJob).awaitSingle().let { jobId ->
-        // add polling logic here
-        findJob(jobId).map {
-            requireNotNull(it?.refImage)
-            it
-        }.retryWhen(Retry.backoff(10, Duration.ofSeconds(3)))
-    }.awaitSingle()
+    }
 }

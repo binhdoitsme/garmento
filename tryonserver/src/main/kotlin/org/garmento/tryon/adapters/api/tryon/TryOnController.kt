@@ -28,10 +28,23 @@ class TryOnController @Autowired constructor(
 
     @PostMapping
     fun createTryOnJob(
-        @RequestParam("referenceImage") referenceImage: MultipartFile,
         @RequestParam("garmentImage") garmentImage: MultipartFile,
-    ) = services.createJob(
-        referenceImage = BufferedInputStream(referenceImage.inputStream),
-        garmentImage = BufferedInputStream(garmentImage.inputStream),
-    ).let(TryOnResponse::convert)
+        @RequestParam("preset") preset: String?,
+        @RequestParam("referenceImage") referenceImage: MultipartFile?,
+    ) = run {
+        if (referenceImage == null && preset == null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST)
+        }
+        if (referenceImage != null) {
+            services.createJob(
+                referenceImage = BufferedInputStream(referenceImage.inputStream),
+                garmentImage = BufferedInputStream(garmentImage.inputStream),
+            )
+        } else {
+            services.createJobForPreset(
+                garmentImage = BufferedInputStream(garmentImage.inputStream),
+                preset = preset!!,
+            )
+        }.let(TryOnResponse::convert)
+    }
 }
