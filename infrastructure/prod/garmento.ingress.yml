@@ -16,19 +16,26 @@ spec:
       http:
         paths:
           - pathType: ImplementationSpecific
+            path: "/(.*)(/|$)"
+            backend:
+              service:
+                name: designer-frontend
+                port:
+                  number: 3000
+          - pathType: ImplementationSpecific
             path: "/api/assets/(.*)(/|$)"
             backend:
               service:
                 name: asset-manager
                 port:
                   number: 8000
-          # - pathType: ImplementationSpecific
-          #   path: "/preprocessor(/|$)(.*)"
-          #   backend:
-          #     service:
-          #       name: preprocessor
-          #       port:
-          #         number: 8000
+          - pathType: ImplementationSpecific
+            path: "/api/(presets/?.*)(/|$)"
+            backend:
+              service:
+                name: preprocessor
+                port:
+                  number: 8000
           - pathType: ImplementationSpecific
             path: "/api/model-api/(.*)(/|$)"
             backend:
@@ -36,13 +43,6 @@ spec:
                 name: model-api
                 port:
                   number: 8000
-          # - pathType: ImplementationSpecific
-          #   path: "/api/services(/|$)(.*)"
-          #   backend:
-          #     service:
-          #       name: service-registry
-          #       port:
-          #         number: 8761
           - pathType: ImplementationSpecific
             path: "/api/(.*)(/|$)"
             backend:

@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: designer-frontend
+  namespace: garmento
+spec:
+  selector:
+    matchLabels:
+      app: designer-frontend
+  template:
+    metadata:
+      labels:
+        app: designer-frontend
+    spec:
+      containers:
+        - name: designer-frontend
+          image: garmento.io/designer-frontend:latest
+          imagePullPolicy: Never
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: designer-frontend
+  namespace: garmento
+spec:
+  selector:
+    app: designer-frontend
+  type: ClusterIP
+  clusterIP: 10.96.6.0
+  ports:
+    - name: rest-api
+      port: 443
+      protocol: TCP
+      targetPort: 3000
+    - name: rest-api-80
+      port: 80
+      protocol: TCP
+      targetPort: 3000
