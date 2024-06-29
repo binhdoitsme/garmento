@@ -9,6 +9,7 @@ import org.garmento.tryon.services.catalogs.CatalogServices
 import org.garmento.tryon.services.users.UserId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
@@ -100,19 +101,18 @@ class CatalogController @Autowired constructor(
     fun createCatalog(
         @RequestBody body: CreateCatalogRequest,
         authentication: Authentication,
-    ) = run {
-        getCurrentUser(authentication).let { user ->
-            catalogServices.create(body.name, UserId(user.id)).run {
-                CatalogResponse(
-                    id = id.value,
-                    name = name,
-                    status = status.value,
-                    createdBy = CreatedByUser(user.name),
-                    thumbnail = imageAssets.firstOrNull()?.url,
-                )
-            }
+    ) = getCurrentUser(authentication).let { user ->
+        catalogServices.create(body.name, UserId(user.id)).run {
+            CatalogResponse(
+                id = id.value,
+                name = name,
+                status = status.value,
+                createdBy = CreatedByUser(user.name),
+                thumbnail = imageAssets.firstOrNull()?.url,
+            )
         }
     }
+
 
     @GetMapping
     fun getCatalogs(
@@ -125,7 +125,9 @@ class CatalogController @Autowired constructor(
             "DESIGNER" -> catalogServices.findByUser(UserId(user.id), page, pageSize)
             "MANAGER" -> catalogServices.find(page, pageSize)
             else -> throw IllegalAccessException("User role is unsupported")
-        }.map { CatalogResponse.fromDomain(it, user) }
+        }.map { CatalogResponse.fromDomain(it, user) }.let {
+            ResponseEntity.ok(it)
+        }
     }
 
     @GetMapping("/{id}")
@@ -136,6 +138,7 @@ class CatalogController @Autowired constructor(
         catalogServices.findBy(CatalogId(id))?.let {
             if (it.createdBy.value == user.id || user.role.name == "MANAGER") {
                 CatalogWithImagesResponse.fromDomain(it, user)
+                    .let { body -> ResponseEntity.ok(body) }
             } else null
         } ?: throw ResponseStatusException(
             HttpStatus.NOT_FOUND, "Catalog is not found"
@@ -157,7 +160,7 @@ class CatalogController @Autowired constructor(
             imageIdListRequest.imageIds.map(::ImageId)
                 .let(imageRepository::findAllById).values.toList().let { images ->
                     catalogServices.addImages(images, catalog)
-                }
+                }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
         }
     }
 
@@ -177,7 +180,7 @@ class CatalogController @Autowired constructor(
                 catalogServices.removeImages(imageIds, catalog)
             }
         }
-    }
+    }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
 
     @PatchMapping("/{id}")
     fun performActionOnCatalog(
@@ -206,7 +209,7 @@ class CatalogController @Autowired constructor(
                 catalogServices.publish(catalog)
             }
         }
-    }
+    }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
 
     @DeleteMapping("/{id}")
     fun deleteCatalog(
@@ -218,5 +221,5 @@ class CatalogController @Autowired constructor(
                 HttpStatus.NOT_FOUND, "Catalog is not found"
             )
         requireOwnCatalog(user, catalog) { catalogServices.delete(catalog.id) }
-    }
+    }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
 }

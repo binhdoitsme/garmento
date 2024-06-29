@@ -22,22 +22,21 @@ class CatalogRepositoryOnJpa @Autowired constructor(
 ) : CatalogRepository {
     @Transactional
     override fun save(catalog: Catalog) {
-        val catalogRecord =
-            catalogDAO.findById(catalog.id.value).orElse(null)
-                ?.apply { entityManager.detach(this) } ?: CatalogRecord(
-                id = catalog.id.value,
-                name = catalog.name,
-                status = catalog.status.value,
-                createdBy = catalog.createdBy.value,
-                items = catalog.imageAssets.map {
-                    CatalogItemRecord(
-                        id = CatalogItemRecordId(
-                            catalogId = catalog.id.value,
-                            imageId = it.id.value,
-                        )
+        val catalogRecord = catalogDAO.findById(catalog.id.value).orElse(null)
+            ?.apply { entityManager.detach(this) } ?: CatalogRecord(
+            id = catalog.id.value,
+            name = catalog.name,
+            status = catalog.status.value,
+            createdBy = catalog.createdBy.value,
+            items = catalog.imageAssets.map {
+                CatalogItemRecord(
+                    id = CatalogItemRecordId(
+                        catalogId = catalog.id.value,
+                        imageId = it.id.value,
                     )
-                },
-            )
+                )
+            },
+        )
         val newItems = catalog.imageAssets.map {
             CatalogItemRecord(
                 id = CatalogItemRecordId(
@@ -49,7 +48,9 @@ class CatalogRepositoryOnJpa @Autowired constructor(
         catalogItemDAO.deleteAllById(catalogRecord.items.map { it.id })
         catalogItemDAO.flush()
         catalogItemDAO.saveAllAndFlush(newItems)
-        catalogDAO.save(catalogRecord.copy(items=newItems))
+        catalogDAO.deleteById(catalogRecord.id)
+        catalogDAO.save(catalogRecord.copy(items = newItems, status = catalog.status.value))
+        catalogItemDAO.flush()
     }
 
     private fun recordToDomain(record: CatalogRecord) =

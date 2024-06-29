@@ -16,15 +16,15 @@ class CatalogServices(
         repository.findByUserId(userId, page, pageSize)
 
     fun addImages(images: List<Image>, catalog: Catalog) =
-        catalog.addImages(images).apply(repository::save)
+        catalog.addImages(images).also(repository::save)
 
     fun removeImages(imageIds: List<ImageId>, catalog: Catalog) =
-        catalog.removeImages(imageIds).apply(repository::save)
+        catalog.removeImages(imageIds).also(repository::save)
 
-    fun submit(catalog: Catalog) = catalog.submitted().apply(repository::save)
-    fun approve(catalog: Catalog) = catalog.approved().apply(repository::save)
-    fun unapprove(catalog: Catalog) = catalog.unapproved().apply(repository::save)
-    fun publish(catalog: Catalog) = catalog.published().apply(repository::save)
+    fun submit(catalog: Catalog) = catalog.submitted().also(repository::save)
+    fun approve(catalog: Catalog) = catalog.approved().also(repository::save)
+    fun unapprove(catalog: Catalog) = catalog.unapproved().also(repository::save)
+    fun publish(catalog: Catalog) = catalog.published().also(repository::save)
 
     fun delete(catalogId: CatalogId) = repository.delete(catalogId)
 }
