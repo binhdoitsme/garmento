@@ -1,21 +1,56 @@
 "use client";
 import {
+  Button,
   Card,
-  CardHeader,
   CardBody,
   CardFooter,
-  Typography,
-  Button,
+  CardHeader,
   Tooltip,
+  Typography,
 } from "@material-tailwind/react";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   GlobalContextActionType,
   GlobalDispatchContext,
 } from "../global-state";
+import { Catalog, CatalogApi } from "./api/catalogs";
+import { Approve, Delete, Publish, Submit, Unapprove, View } from "./buttons";
+import CreateCatalog from "./create";
 
 export default function Catalogs() {
   const globalDispatch = useContext(GlobalDispatchContext);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+  const catalogApi = useMemo(() => new CatalogApi(), []);
+
+  const refreshCatalogList = () => catalogApi.listCatalogs().then(setCatalogs);
+  useEffect(() => {
+    refreshCatalogList();
+  }, []);
+
+  // const catalogs: CatalogCardProps[] = [
+  //   {
+  //     name: "My Catalog",
+  //     createdBy: "BinhDH",
+  //     approvedBy: "Manager Name",
+  //     status: "APPROVED",
+  //   },
+  //   {
+  //     name: "My Catalog",
+  //     createdBy: "BinhDH",
+  //     status: "SUBMITTED",
+  //   },
+  //   {
+  //     name: "My Catalog",
+  //     createdBy: "BinhDH",
+  //     status: "DRAFT",
+  //   },
+  //   {
+  //     name: "My Catalog",
+  //     createdBy: "BinhDH",
+  //     approvedBy: "Manager Name",
+  //     status: "PUBLISHED",
+  //   },
+  // ];
 
   useEffect(() => {
     globalDispatch?.({
@@ -34,40 +69,31 @@ export default function Catalogs() {
 
   return (
     <div className="flex flex-col items-center mb-6 py-4">
-      <div className="md:w-5/6 xl:w-5/6 flex justify-start">
-        <Button color="indigo" variant="gradient" size="sm">
-          <i className="fas fa-file-circle-plus pr-1" /> Create Catalog
-        </Button>
-      </div>
+      <CreateCatalog api={catalogApi} onCreated={refreshCatalogList} />
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4 md:w-5/6 xl:w-5/6">
-        <CatalogCard
-          name="My Catalog"
-          createdBy="BinhDH"
-          approvedBy="Manager Name"
-          status="APPROVED"
-        />
-        <CatalogCard name="My Catalog" createdBy="BinhDH" status="SUBMITTED" />
-        <CatalogCard
-          name="My Catalog"
-          createdBy="BinhDH"
-          status="NOT_SUBMITTED"
-        />
-        <CatalogCard
-          name="My Catalog"
-          createdBy="BinhDH"
-          approvedBy="Manager Name"
-          status="PUBLISHED"
-        />
+        {catalogs.map((props, index) => (
+          <CatalogCard
+            key={index}
+            {...props}
+            createdBy={props.createdBy.name}
+            status={props.status}
+            api={catalogApi}
+            refreshCatalogs={refreshCatalogList}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 type CatalogCardProps = {
+  api: CatalogApi;
+  id: string;
   name: string;
   createdBy: string;
   approvedBy?: string;
-  status: "NOT_SUBMITTED" | "SUBMITTED" | "APPROVED" | "REJECTED" | "PUBLISHED";
+  status: "DRAFT" | "SUBMITTED" | "APPROVED" | "PUBLISHED";
+  refreshCatalogs: () => void;
 };
 
 function CatalogCard(props: CatalogCardProps) {
@@ -89,7 +115,7 @@ function CatalogCard(props: CatalogCardProps) {
           <i className="fas fa-pen-to-square pr-2 block w-6 text-gray-700" />
           {status === "PUBLISHED" ? "Published" : "Created"} by: {createdBy}
         </Typography>
-        {status !== "NOT_SUBMITTED" && (
+        {status !== "DRAFT" && status !== "PUBLISHED" && (
           <Typography>
             {approvedBy ? (
               <>
@@ -104,60 +130,20 @@ function CatalogCard(props: CatalogCardProps) {
         )}
       </CardBody>
       <CardFooter className="flex gap-2 justify-end py-0">
-        <Tooltip content="View">
-          <Button className="px-3" variant="outlined" size="sm">
-            <i className="far fa-eye" />
-          </Button>
-        </Tooltip>
+        <View {...props} />
         {status === "APPROVED" && (
-          <Tooltip content="Unapprove">
-            <Button className="px-3" variant="outlined" color="red" size="sm">
-              <i className="fas fa-thumbs-down" />
-            </Button>
-          </Tooltip>
+          <Unapprove {...props} onUnapproved={props.refreshCatalogs} />
         )}
         {status === "APPROVED" && (
-          <Tooltip content="Publish">
-            <Button
-              className="px-3"
-              variant="outlined"
-              color="blue-gray"
-              size="sm"
-            >
-              <i className="fas fa-arrow-up-from-bracket" />
-            </Button>
-          </Tooltip>
+          <Publish {...props} onPublished={props.refreshCatalogs} />
         )}
-        {status === "NOT_SUBMITTED" && (
-          <Tooltip content="Submit for review">
-            <Button
-              className="px-3"
-              variant="outlined"
-              color="blue-gray"
-              size="sm"
-            >
-              <i className="fas fa-clipboard-check" />
-            </Button>
-          </Tooltip>
+        {status === "DRAFT" && (
+          <Submit {...props} onSubmitted={props.refreshCatalogs} />
         )}
         {status === "SUBMITTED" && (
-          <Tooltip content="Approve">
-            <Button className="px-3" variant="outlined" color="green" size="sm">
-              <i className="fas fa-thumbs-up" />
-            </Button>
-          </Tooltip>
+          <Approve {...props} onApproved={props.refreshCatalogs} />
         )}
-        <Tooltip content="Delete">
-          <Button
-            className="px-3"
-            variant="outlined"
-            color="red"
-            size="sm"
-            disabled={status === "PUBLISHED"}
-          >
-            <i className="fas fa-trash" />
-          </Button>
-        </Tooltip>
+        <Delete {...props} onDeleted={props.refreshCatalogs} />
       </CardFooter>
     </Card>
   );

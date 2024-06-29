@@ -1,88 +1,51 @@
 "use client";
-import { GlobalContextActionType, GlobalDispatchContext } from "@/app/global-state";
+import {
+  GlobalContextActionType,
+  GlobalDispatchContext,
+} from "@/app/global-state";
 import { Button, Tooltip, Typography } from "@material-tailwind/react";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { CatalogApi, Catalog as CatalogType } from "../api/catalogs";
+import { Approve, Delete, Publish, Submit, Unapprove } from "../buttons";
+import { useRouter } from "next/navigation";
 
 export default function CatalogDetailsPage({
-  params,
+  params: { id },
 }: {
   params: { id: string };
 }) {
-  const catalog: CatalogProps = {
-    status: "SUBMITTED",
-    createdBy: "BinhDH",
-    name: "My Catalog Name",
-    approvedBy: "",
-    items: [
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-      {
-        id: "1",
-        url: "https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg",
-      },
-    ],
-  };
-  const { status, createdBy, name, approvedBy, items } = catalog;
+  const [catalog, setCatalog] = useState<CatalogProps>();
+  const api = useMemo(() => new CatalogApi(), []);
+  const refresh = () =>
+    api
+      .getCatalogDetails(id)
+      .then((catalog) => ({
+        ...catalog,
+        api,
+        createdBy: catalog.createdBy.name,
+        approvedBy: catalog.status === "APPROVED" ? "Manager" : undefined,
+      }))
+      .then(setCatalog);
 
-  return (
-    <Catalog
-      name={name}
-      createdBy={createdBy}
-      approvedBy={approvedBy}
-      status={status}
-      items={items}
-    />
-  );
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  if (!catalog) {
+    return <></>;
+  }
+  return <Catalog {...catalog} refresh={refresh} />;
 }
 
 type CatalogProps = {
+  api: CatalogApi;
+  id: string;
   name: string;
   createdBy: string;
   approvedBy?: string;
-  status: "NOT_SUBMITTED" | "SUBMITTED" | "APPROVED" | "REJECTED" | "PUBLISHED";
+  status: "DRAFT" | "SUBMITTED" | "APPROVED" | "PUBLISHED";
   items: CatalogItemProps[];
+  refresh?: () => void;
 };
 
 type CatalogItemProps = {
@@ -113,12 +76,13 @@ function CatalogItem(props: CatalogItemProps) {
 function Catalog(props: CatalogProps) {
   const { name, createdBy, approvedBy, status, items } = props;
   const globalDispatch = useContext(GlobalDispatchContext);
+  const router = useRouter();
 
   useEffect(() => {
     globalDispatch?.({
       type: GlobalContextActionType.SET_BREADCRUMBS,
       value: {
-        breadcrumbs: `Designer > Catalogs > Catalog "${name}"`,
+        breadcrumbs: `Designer > Catalogs > Catalog '${name}'`,
       },
     });
     globalDispatch?.({
@@ -131,12 +95,15 @@ function Catalog(props: CatalogProps) {
 
   return (
     <div className="flex flex-col items-center mb-6 py-4">
+      <h1 className="text-3xl text-left md:w-5/6 xl:w-5/6">
+        Catalog <strong>{name}</strong>
+      </h1>
       <div className="md:w-5/6 xl:w-5/6 flex items-start mt-4 flex-col">
         <Typography>
           <i className="fas fa-pen-to-square pr-2 block w-6 text-gray-700" />
           {status === "PUBLISHED" ? "Published" : "Created"} by: {createdBy}
         </Typography>
-        {status !== "NOT_SUBMITTED" && (
+        {status !== "DRAFT" && status !== "PUBLISHED" && (
           <Typography>
             {approvedBy ? (
               <>
@@ -152,48 +119,16 @@ function Catalog(props: CatalogProps) {
       </div>
       <div className="md:w-5/6 xl:w-5/6 flex justify-end my-4 gap-2">
         {status === "SUBMITTED" && (
-          <Tooltip content="Approve collection">
-            <Button variant="outlined" color="green" size="sm">
-              <i className="fas fa-thumbs-up pr-2" />
-              Approve
-            </Button>
-          </Tooltip>
+          <Approve full {...props} onApproved={props.refresh} />
         )}
         {status === "APPROVED" && (
-          <Tooltip content="Unapprove collection">
-            <Button variant="outlined" color="red" size="sm">
-              <i className="fas fa-thumbs-down pr-2" />
-              Unapprove
-            </Button>
-          </Tooltip>
+          <Unapprove full {...props} onUnapproved={props.refresh} />
         )}
-        {status === "NOT_SUBMITTED" && (
-          <Tooltip content="Submit collection">
-            <Button variant="outlined" color="blue-gray" size="sm">
-              <i className="fas fa-clipboard-check pr-2" />
-              Submit
-            </Button>
-          </Tooltip>
+        {status === "DRAFT" && (
+          <Submit full {...props} onSubmitted={props.refresh} />
         )}
-        {status === "APPROVED" && (
-          <Tooltip content="Publish collection">
-            <Button variant="outlined" color="blue-gray" size="sm">
-              <i className="fas fa-arrow-up-from-bracket pr-2" />
-              Publish
-            </Button>
-          </Tooltip>
-        )}
-        <Tooltip content="Delete collection">
-          <Button
-            variant="outlined"
-            color="red"
-            size="sm"
-            disabled={status === "PUBLISHED"}
-          >
-            <i className="fas fa-trash pr-2" />
-            Delete
-          </Button>
-        </Tooltip>
+        {status === "APPROVED" && <Publish full {...props} />}
+        <Delete full {...props} onDeleted={() => router.push("/catalogs")} />
       </div>
       <div className="md:w-5/6 xl:w-5/6 flex justify-end my-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
