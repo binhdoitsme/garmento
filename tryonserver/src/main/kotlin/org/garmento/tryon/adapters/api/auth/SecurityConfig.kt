@@ -24,6 +24,7 @@ class SecurityConfig {
         authorizeHttpRequests {
             authorize("/actuator/**", permitAll)
             authorize("/tokens/**", permitAll)
+            authorize("/service-tokens/**", permitAll)
             authorize("/error", permitAll)
             authorize(anyRequest, authenticated)
         }

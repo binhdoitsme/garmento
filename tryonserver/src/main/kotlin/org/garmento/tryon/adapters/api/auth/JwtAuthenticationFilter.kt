@@ -16,11 +16,15 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     companion object {
         const val COOKIE_NAME = "accessToken"
-        val PUBLIC_ROUTES = listOf("/tokens", "/actuator")
+        val PUBLIC_ROUTES = listOf("/tokens", "/actuator", "/service-tokens")
+        val ALLOW_SERVICE_ROUTES = listOf("/try-ons")
     }
 
     override fun shouldNotFilter(request: HttpServletRequest) =
         PUBLIC_ROUTES.any { request.servletPath.startsWith(it) }
+
+    private fun isServiceAllowedRoute(request: HttpServletRequest) =
+        ALLOW_SERVICE_ROUTES.any { request.servletPath.startsWith(it) }
 
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -31,6 +35,10 @@ class JwtAuthenticationFilter(
         val parsed = tokenHandler.parseToken(token)
         val claims = parsed.payload
         val email = claims.subject
+        val role = claims["role"]
+        if (role == "serviceToken" && !isServiceAllowedRoute(request)) {
+            throw IllegalStateException("The requested URL does not accept service-level tokens")
+        }
         val user = authRepository.findByEmail(email) ?: throw IllegalArgumentException()
         val authorities = listOf(SimpleGrantedAuthority(user.role.name))
         val authentication = UsernamePasswordAuthenticationToken(user, null, authorities)
@@ -43,7 +51,6 @@ class JwtAuthenticationFilter(
     }
 
     private fun extractJwtToken(request: HttpServletRequest): String = run {
-        println("cookies" to request.cookies?.map { cookie -> cookie.name })
         request.cookies?.find { it.name == COOKIE_NAME }?.value
             ?: throw IllegalArgumentException("Missing token in cookies")
     }
