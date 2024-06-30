@@ -3,7 +3,7 @@ ARG PYTHON_BASE=3.11-slim
 FROM python:$PYTHON_BASE AS base
 
 # install required dependencies
-RUN apt update && apt upgrade
+RUN apt update && apt upgrade -y
 
 # build stage
 FROM base AS builder
