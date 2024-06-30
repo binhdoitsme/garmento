@@ -1,7 +1,16 @@
 "use client";
-import { Button, Typography } from "@material-tailwind/react";
-import { useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogBody,
+  DialogFooter,
+  DialogHeader,
+  Spinner,
+  Typography,
+} from "@material-tailwind/react";
+import React, { useEffect, useMemo, useState } from "react";
 import { TryOnApi, TryOnResponse } from "./api/try-on";
+import { Catalog, CatalogApi } from "../catalogs/api/catalogs";
 
 export interface TryOnResultProps {
   isGenerating: boolean;
@@ -11,9 +20,72 @@ export interface TryOnResultProps {
   preset?: string;
 }
 
+function SaveToCatalog({
+  catalogApi,
+  result,
+}: {
+  catalogApi: CatalogApi;
+  result?: TryOnResponse;
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
+
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
+  const handleAddToCatalog = (id: string, url: string) => async () => {
+    setIsLoading(true);
+    await catalogApi.addImageToCatalog(id, url);
+    closeModal();
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    if (!modalOpen) {
+      setIsLoading(false);
+      return;
+    }
+    catalogApi.listCatalogs().then(setCatalogs);
+  }, [modalOpen]);
+
+  return (
+    <>
+      <Button disabled={!result} onClick={openModal}>
+        <i className="far fa-square-plus pr-1" />
+        Save
+      </Button>
+      <Dialog open={modalOpen} handler={closeModal}>
+        <DialogHeader>Confirm delete catalog</DialogHeader>
+        <DialogBody>
+          Select catalog to add to:
+          <div className="flex gap-2 mt-4">
+            {catalogs.map((catalog, index) => (
+              <React.Fragment key={index}>
+                <Button
+                  color="blue-gray"
+                  variant="gradient"
+                  disabled={isLoading}
+                  onClick={handleAddToCatalog(
+                    catalog.id,
+                    result?.resultImageURL ?? ""
+                  )}
+                >
+                  {isLoading && <Spinner />}
+                  {catalog.name}
+                </Button>
+              </React.Fragment>
+            ))}
+          </div>
+        </DialogBody>
+      </Dialog>
+    </>
+  );
+}
+
 export function TryOnResult(props: TryOnResultProps) {
   const { isGenerating, api, setIsGenerating } = props;
   const [result, setResult] = useState<TryOnResponse>();
+  const catalogApi = useMemo(() => new CatalogApi(), []);
 
   const doGenerate = async () => {
     setResult(undefined);
@@ -31,7 +103,10 @@ export function TryOnResult(props: TryOnResultProps) {
   };
 
   const doSaveToCatalog = () => {
-    alert("Do save to catalog");
+    if (!result) {
+      return;
+    }
+    // catalogApi.addImageToCatalog(result.id, result.resultImageURL ?? "")
   };
 
   const doDownload = () => {
@@ -54,14 +129,11 @@ export function TryOnResult(props: TryOnResultProps) {
           <i className="fas fa-arrows-rotate pr-1" />
           Generate
         </Button>
-        <Button disabled={!result} onClick={doSaveToCatalog}>
-          <i className="far fa-square-plus pr-1" />
-          Save
-        </Button>
-        <Button disabled={!result} onClick={doDownload}>
+        <SaveToCatalog catalogApi={catalogApi} result={result} />
+        {/* <Button disabled onClick={doDownload}>
           <i className="fas fa-download pr-1" />
           Download
-        </Button>
+        </Button> */}
       </div>
       <div className="border border-white sm:w-full md:w-3/5 xl:w-full h-96 flex justify-center items-center object-contain">
         {!result ? (

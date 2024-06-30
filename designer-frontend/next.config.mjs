@@ -6,6 +6,7 @@ const nextConfig = {
     ];
   },
   trailingSlash: false,
+  reactStrictMode: false,
 };
 
 export default nextConfig;

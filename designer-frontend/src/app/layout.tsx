@@ -16,6 +16,7 @@ import "./globals.css";
 import Template from "./template";
 import { TokensApi } from "./login/api";
 import { usePathname, useRouter } from "next/navigation";
+import axios from "axios";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,23 @@ export default function RootLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  const errorComposer = (error: any) => {
+    return () => {
+      const statusCode = error.response ? error.response.status : null;
+      if (statusCode >= 400 && statusCode < 500) {
+        router.push("/login");
+      }
+    };
+  };
+
+  axios.interceptors.response.use(undefined, function (error) {
+    error.handleGlobally = errorComposer(error);
+
+    return Promise.reject(error);
+  });
+
   useEffect(() => {
+    dispatch({ type: GlobalContextActionType.LOADING_START, value: {} });
     // check /api/me first, if unauthorized then redirect to /login. Else redirect to /home
     tokensApi
       .me()
@@ -44,7 +61,10 @@ export default function RootLayout({
           throw Error();
         }
       })
-      .catch(() => router.push("/home"));
+      .catch(() => router.push("/home"))
+      .then(() => {
+        dispatch({ type: GlobalContextActionType.LOADING_END, value: {} });
+      });
   }, []);
 
   return (
@@ -68,7 +88,7 @@ export default function RootLayout({
               className={`${inter.className} min-h-screen flex flex-col justify-between`}
             >
               <Navigation />
-              <Template>{children}</Template>
+              <Template>{globalState.isLoading || children}</Template>
               <Footer />
             </body>
           </html>

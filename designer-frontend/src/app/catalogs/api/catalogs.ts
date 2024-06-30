@@ -37,10 +37,10 @@ export class CatalogApi {
 
   async addImageToCatalog(
     id: string,
-    imageIds: string[],
+    imageURL: string,
     endpoint = "/api/catalogs/{id}/assets"
   ) {
-    await this._axios.post(endpoint.replace("{id}", id), { imageIds });
+    await this._axios.post(endpoint.replace("{id}", id), { imageURLs: [imageURL] });
   }
 
   async removeImageFromCatalog(
