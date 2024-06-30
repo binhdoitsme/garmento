@@ -45,12 +45,12 @@ class CatalogRepositoryOnJpa @Autowired constructor(
                 )
             )
         }
-        catalogItemDAO.deleteAllById(catalogRecord.items.map { it.id })
+        catalogItemDAO.deleteAllById_CatalogId(catalog.id.value)
         catalogItemDAO.flush()
-        catalogItemDAO.saveAllAndFlush(newItems)
         catalogDAO.deleteById(catalogRecord.id)
-        catalogDAO.save(catalogRecord.copy(items = newItems, status = catalog.status.value))
-        catalogItemDAO.flush()
+        catalogDAO.save(catalogRecord.copy(items = listOf(), status = catalog.status.value))
+        catalogDAO.flush()
+        catalogItemDAO.saveAllAndFlush(newItems)
     }
 
     private fun recordToDomain(record: CatalogRecord) =

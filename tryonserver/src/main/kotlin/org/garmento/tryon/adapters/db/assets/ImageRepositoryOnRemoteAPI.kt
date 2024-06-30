@@ -10,6 +10,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import java.io.InputStream
 import java.net.URI
 
@@ -21,11 +22,22 @@ class ImageRepositoryOnRemoteAPI @Autowired constructor(
     private val baseURL: String = "http://$serviceId"
 
     companion object {
-        private const val PUBLIC_BASE_URL: String = "/api/assets"
+        private const val PUBLIC_BASE_URL: String = "/api/assets/assets/"
 
         data class ImageAssetResponse(val id: String, val url: String)
         class CannotSaveImage(message: String) : RuntimeException(message)
     }
+
+    override fun save(id: ImageId, url: String): Image =
+        httpClient.post().uri("$baseURL/assets/upsert")
+            .body(Mono.just(mapOf("id" to id.value, "url" to url)), Map::class.java)
+            .retrieve()
+            .toEntity(ImageAssetResponse::class.java).mapNotNull {
+                Image(
+                    id = ImageId(it.body!!.id),
+                    url = URI.create("${PUBLIC_BASE_URL}${it.body!!.url}")
+                )
+            }.block()!!
 
     override fun save(image: InputStream) = image.readAllBytes().runCatching {
         LinkedMultiValueMap<String, Any>().apply {

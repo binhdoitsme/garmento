@@ -2,7 +2,9 @@ package org.garmento.tryon.services.catalogs
 
 import org.garmento.tryon.services.assets.Image
 import org.garmento.tryon.services.assets.ImageId
+import org.garmento.tryon.services.assets.ImageRepository
 import org.garmento.tryon.services.users.UserId
+import java.net.URI
 
 class CatalogServices(
     private val repository: CatalogRepository,

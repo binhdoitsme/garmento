@@ -1,5 +1,11 @@
 package org.garmento.tryon.adapters.api.catalogs
 
+import org.garmento.tryon.adapters.api.catalogs.CatalogRequests.CatalogAction
+import org.garmento.tryon.adapters.api.catalogs.CatalogRequests.CreateCatalogRequest
+import org.garmento.tryon.adapters.api.catalogs.CatalogRequests.CreatedByUser
+import org.garmento.tryon.adapters.api.catalogs.CatalogRequests.ImageListRequest
+import org.garmento.tryon.adapters.api.catalogs.CatalogResponses.CatalogResponse
+import org.garmento.tryon.adapters.api.catalogs.CatalogResponses.CatalogWithImagesResponse
 import org.garmento.tryon.services.assets.ImageId
 import org.garmento.tryon.services.assets.ImageRepository
 import org.garmento.tryon.services.auth.User
@@ -21,60 +27,6 @@ class CatalogController @Autowired constructor(
     private val catalogServices: CatalogServices,
     private val imageRepository: ImageRepository,
 ) {
-    companion object {
-        data class CreateCatalogRequest(val name: String)
-        data class ImageIdListRequest(val imageIds: List<String>)
-
-        data class CreatedByUser(val name: String)
-        data class CatalogResponse(
-            val id: String,
-            val name: String,
-            val status: String,
-            val createdBy: CreatedByUser,
-            // first item in catalog or null if the catalog is empty
-            val thumbnail: URI? = null,
-        ) {
-            companion object {
-                fun fromDomain(catalog: Catalog, user: User) = CatalogResponse(
-                    id = catalog.id.value,
-                    name = catalog.name,
-                    status = catalog.status.value,
-                    createdBy = CreatedByUser(user.name),
-                    thumbnail = catalog.imageAssets.firstOrNull()?.url,
-                )
-            }
-        }
-
-        data class ImageResponse(
-            val id: String,
-            val url: URI,
-        )
-
-        data class CatalogWithImagesResponse(
-            val id: String,
-            val name: String,
-            val status: String,
-            val createdBy: CreatedByUser,
-            // first item in catalog or null if the catalog is empty
-            val items: List<ImageResponse>,
-        ) {
-            companion object {
-                fun fromDomain(catalog: Catalog, user: User) =
-                    CatalogWithImagesResponse(id = catalog.id.value,
-                        name = catalog.name,
-                        status = catalog.status.value,
-                        createdBy = CreatedByUser(user.name),
-                        items = catalog.imageAssets.map { image ->
-                            ImageResponse(id = image.id.value, url = image.url)
-                        })
-            }
-        }
-
-        enum class CatalogAction {
-            SUBMIT, APPROVE, UNAPPROVE, PUBLISH,
-        }
-    }
-
     private fun getCurrentUser(authentication: Authentication) =
         (authentication.principal as? User)?.apply { println("currentUser" to this) }
             ?: throw ResponseStatusException(HttpStatus.UNAUTHORIZED, "Cannot get catalogs")
@@ -148,7 +100,7 @@ class CatalogController @Autowired constructor(
     @PostMapping("/{id}/assets")
     fun addImagesToCatalog(
         @PathVariable("id") id: String,
-        @RequestBody imageIdListRequest: ImageIdListRequest,
+        @RequestBody imageListRequest: ImageListRequest,
         authentication: Authentication,
     ) = getCurrentUser(authentication).let { user ->
         val catalog =
@@ -157,8 +109,9 @@ class CatalogController @Autowired constructor(
             )
 
         requireOwnCatalog(user, catalog) {
-            imageIdListRequest.imageIds.map(::ImageId)
-                .let(imageRepository::findAllById).values.toList().let { images ->
+            imageListRequest.imageURLs
+                .map { imageRepository.save(url = it, id = ImageId(id)) }
+                .let { images ->
                     catalogServices.addImages(images, catalog)
                 }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
         }
@@ -167,7 +120,7 @@ class CatalogController @Autowired constructor(
     @DeleteMapping("/{id}/assets")
     fun removeImagesFromCatalog(
         @PathVariable("id") id: String,
-        @RequestBody imageIdListRequest: ImageIdListRequest,
+        @RequestBody imageListRequest: ImageListRequest,
         authentication: Authentication,
     ) = getCurrentUser(authentication).let { user ->
         val catalog =
@@ -176,7 +129,7 @@ class CatalogController @Autowired constructor(
             )
 
         requireOwnCatalog(user, catalog) {
-            imageIdListRequest.imageIds.map(::ImageId).let { imageIds ->
+            imageListRequest.imageURLs.map(::ImageId).let { imageIds ->
                 catalogServices.removeImages(imageIds, catalog)
             }
         }
