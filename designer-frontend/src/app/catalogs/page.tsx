@@ -79,6 +79,7 @@ export default function Catalogs() {
             status={props.status}
             api={catalogApi}
             refreshCatalogs={refreshCatalogList}
+            thumbnail={props.thumbnail}
           />
         ))}
       </div>
@@ -91,19 +92,23 @@ type CatalogCardProps = {
   id: string;
   name: string;
   createdBy: string;
+  thumbnail?: string;
   approvedBy?: string;
   status: "DRAFT" | "SUBMITTED" | "APPROVED" | "PUBLISHED";
   refreshCatalogs: () => void;
 };
 
 function CatalogCard(props: CatalogCardProps) {
-  const { name, createdBy, approvedBy, status } = props;
+  const { thumbnail, name, createdBy, approvedBy, status } = props;
 
+  const fallbackThumbnail =
+    "https://images.unsplash.com/photo-1540553016722-983e48a2cd10?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80";
   return (
     <Card className="mt-6 w-72 h-full">
-      <CardHeader color="blue-gray" className="mx-6 mt-6 rounded-md">
+      <CardHeader color="blue-gray" className="mx-6 mt-6 rounded-md flex justify-center">
         <img
-          src="https://images.unsplash.com/photo-1540553016722-983e48a2cd10?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80"
+          className="h-48"
+          src={thumbnail ?? fallbackThumbnail}
           alt="card-image"
         />
       </CardHeader>
