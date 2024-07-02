@@ -3,7 +3,7 @@ ARG PYTHON_BASE=3.11-slim
 FROM python:$PYTHON_BASE AS base
 
 # install required dependencies
-RUN apt update && apt upgrade
+RUN apt update && apt upgrade -y
 RUN apt install git gcc g++ python3-dev pkg-config ffmpeg libsm6 libxext6 -y
 
 # build stage
