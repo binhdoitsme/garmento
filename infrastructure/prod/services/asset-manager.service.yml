@@ -22,9 +22,13 @@ spec:
               cpu: "500m"
           ports:
             - containerPort: 8000
-          env:
-            - name: EUREKA_CLIENT_SERVICE_URL
-              value: http://service-registry:443
+          volumeMounts:
+            - name: asset-manager-persistent-storage
+              mountPath: /project/assets
+      volumes:
+        - name: asset-manager-persistent-storage
+          persistentVolumeClaim:
+            claimName: asset-manager-volume-claim
 ---
 apiVersion: v1
 kind: Service
