@@ -2,16 +2,13 @@ import axios, { Axios } from "axios";
 
 export class AuthApi {
   /**
-   * @param {string} backendHost
    * @param {AbortController} abortController
    * @param {Axios} _axios
    */
   constructor(
-    backendHost,
     abortController = new AbortController(),
     _axios = axios.create({
       withCredentials: false,
-      baseURL: backendHost,
       signal: abortController.signal,
     })
   ) {

@@ -23,14 +23,23 @@ function App(props) {
   const [error, setError] = useState("");
   /** @type {[string, react.Dispatch<react.SetStateAction<string>>]} */
   const [selectedFileObjURL, setSelectedFileObjURL] = useState();
-  const backendHost = props.backendHost;
+  /** @type {[File | undefined, react.Dispatch<react.SetStateAction<File>>]} */
+  const [designFile, setDesignFile] = useState();
+
   /** @type {TryOnApi} */
-  const tryOnApi = useMemo(() => new TryOnApi(backendHost));
+  const tryOnApi = useMemo(() => new TryOnApi(), []);
   /** @type {DesignsApi} */
-  const designApi = useMemo(() => new DesignsApi(backendHost));
+  const designApi = useMemo(() => new DesignsApi(), []);
   /** @type {AuthApi} */
-  const authApi = useMemo(() => new AuthApi(backendHost));
+  const authApi = useMemo(() => new AuthApi(), []);
   const designId = props.designId;
+
+  useEffect(() => {
+    authApi
+      .authenticateAsService()
+      .then(() => designApi.getDesignAsBlob(props.designId))
+      .then(setDesignFile);
+  }, []);
 
   /** @param {React.ChangeEvent<HTMLInputElement>} e */
   const updateSelectedFile = (e) => {
@@ -75,10 +84,6 @@ function App(props) {
       }, 1000);
     }
   };
-
-  useEffect(() => {
-    authApi.authenticateAsService();
-  }, []);
 
   return (
     <div className="App border-collapse border-black border min-w-24 min-h-96 h-96 flex justify-around items-center">

@@ -8,16 +8,13 @@ import axios, { Axios } from "axios";
 
 export class DesignsApi {
   /**
-   * @param {string} backendHost
    * @param {AbortController} abortController
    * @param {Axios} _axios
    */
   constructor(
-    backendHost,
     abortController = new AbortController(),
     _axios = axios.create({
       withCredentials: false,
-      baseURL: backendHost,
       signal: abortController.signal,
     })
   ) {
@@ -29,16 +26,23 @@ export class DesignsApi {
 
   /**
    * @param {string} id
-   * @param {string} [endpoint="/api/designs"]
+   * @param {string} [endpoint="/api/catalogs"]
    * @returns {Promise<DesignResponse>}
    */
-  async getDesignDetails(id, endpoint = "/api/designs") {
+  async getDesignDetails(id, endpoint = "/api/catalogs") {
     const response = await this._axios.get(`${endpoint}/${id}`);
-    return response.data;
+    return response.data?.items?.[0];
   }
 
+  /**
+   * @param {string} id
+   * @returns
+   */
   async getDesignAsBlob(id) {
-    const { url } = await this.getDesignDetails(id);
+    const url = (await this.getDesignDetails(id))?.url;
+    if (!url) {
+      return;
+    }
     const response = await this._axios.get(url, { responseType: "blob" });
     return response.data;
   }
