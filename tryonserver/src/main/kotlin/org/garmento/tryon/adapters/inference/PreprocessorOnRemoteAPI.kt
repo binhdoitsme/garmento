@@ -27,7 +27,7 @@ class PreprocessorOnRemoteAPI @Autowired constructor(
     @Value("\${remote.assetServiceId}") private val assetServiceId: String,
 ) : Preprocessor {
     companion object {
-        private const val PUBLIC_BASE_ASSET_URL = "/api/assets"
+        private const val PUBLIC_BASE_ASSET_URL = "/api/assets/assets/"
     }
 
     private val baseURL: String = "http://$serviceId"

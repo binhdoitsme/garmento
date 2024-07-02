@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.garmento.tryon.services.auth.AuthRepository
+import org.garmento.tryon.services.auth.Role
+import org.garmento.tryon.services.auth.User
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -17,7 +19,7 @@ class JwtAuthenticationFilter(
     companion object {
         const val COOKIE_NAME = "accessToken"
         val PUBLIC_ROUTES = listOf("/tokens", "/actuator", "/service-tokens")
-        val ALLOW_SERVICE_ROUTES = listOf("/try-ons")
+        val ALLOW_SERVICE_ROUTES = listOf("/try-ons", "/catalogs")
     }
 
     override fun shouldNotFilter(request: HttpServletRequest) =
@@ -39,7 +41,11 @@ class JwtAuthenticationFilter(
         if (role == "serviceToken" && !isServiceAllowedRoute(request)) {
             throw IllegalStateException("The requested URL does not accept service-level tokens")
         }
-        val user = authRepository.findByEmail(email) ?: throw IllegalArgumentException()
+        val user = if (role != "serviceToken") {
+            authRepository.findByEmail(email) ?: throw IllegalArgumentException()
+        } else {
+            User("", "", "", Role("", "service"))
+        }
         val authorities = listOf(SimpleGrantedAuthority(user.role.name))
         val authentication = UsernamePasswordAuthenticationToken(user, null, authorities)
         SecurityContextHolder.getContext().authentication = authentication

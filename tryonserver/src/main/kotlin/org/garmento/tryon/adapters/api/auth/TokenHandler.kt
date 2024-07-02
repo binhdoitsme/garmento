@@ -54,7 +54,9 @@ class TokenHandler(
         if (token.startsWith(SERVICE_TOKEN_PREFIX)) {
             parseToken(token.removePrefix(SERVICE_TOKEN_PREFIX))
         } else {
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token)
+            Jwts.parser().verifyWith(key).build().parseSignedClaims(token).also {
+                println("token: $it")
+            }
         }
 
     fun getSSOTokenInfo(token: String): Tokeninfo? = run {

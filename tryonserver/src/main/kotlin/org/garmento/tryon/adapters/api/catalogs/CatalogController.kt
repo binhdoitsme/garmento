@@ -88,7 +88,7 @@ class CatalogController @Autowired constructor(
         authentication: Authentication,
     ) = getCurrentUser(authentication).let { user ->
         catalogServices.findBy(CatalogId(id))?.let {
-            if (it.createdBy.value == user.id || user.role.name == "MANAGER") {
+            if (it.createdBy.value == user.id || user.role.name == "MANAGER" || user.role.name == "service") {
                 CatalogWithImagesResponse.fromDomain(it, user)
                     .let { body -> ResponseEntity.ok(body) }
             } else null
@@ -109,9 +109,12 @@ class CatalogController @Autowired constructor(
             )
 
         requireOwnCatalog(user, catalog) {
-            imageListRequest.imageURLs
-                .map { imageRepository.save(url = it, id = ImageId(id)) }
-                .let { images ->
+            imageListRequest.imageURLs.map {
+                    imageRepository.save(
+                        url = it,
+                        id = ImageId(id)
+                    )
+                }.let { images ->
                     catalogServices.addImages(images, catalog)
                 }.let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Void>() }
         }

@@ -35,7 +35,7 @@ class ImageRepositoryOnRemoteAPI @Autowired constructor(
             .toEntity(ImageAssetResponse::class.java).mapNotNull {
                 Image(
                     id = ImageId(it.body!!.id),
-                    url = URI.create("${PUBLIC_BASE_URL}${it.body!!.url}")
+                    url = URI.create("${PUBLIC_BASE_URL}${it.body!!.url.removePrefix("/assets/")}")
                 )
             }.block()!!
 
