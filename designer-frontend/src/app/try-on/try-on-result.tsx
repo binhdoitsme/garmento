@@ -102,17 +102,6 @@ export function TryOnResult(props: TryOnResultProps) {
     );
   };
 
-  const doSaveToCatalog = () => {
-    if (!result) {
-      return;
-    }
-    // catalogApi.addImageToCatalog(result.id, result.resultImageURL ?? "")
-  };
-
-  const doDownload = () => {
-    alert("Do Download");
-  };
-
   return (
     <div className="md:max-xl:col-span-2 flex flex-col gap-2 items-center p-4">
       <Typography variant="h5">Try-on result</Typography>
@@ -137,7 +126,11 @@ export function TryOnResult(props: TryOnResultProps) {
       </div>
       <div className="border border-white sm:w-full md:w-3/5 xl:w-full h-96 flex justify-center items-center object-contain">
         {!result ? (
-          "Placeholder"
+          isGenerating ? (
+            <Spinner />
+          ) : (
+            "Click Generate and wait for result generation"
+          )
         ) : (
           <img
             src={result.resultImageURL!}
